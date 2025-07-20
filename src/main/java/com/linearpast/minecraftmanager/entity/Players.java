@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -28,6 +29,7 @@ public class Players {
 
 	@Column(name = "create_time")
 	private LocalDateTime createTime;
+	@ColumnDefault("0")
 	private Integer totalScore;
 	private String description;
 	@OneToOne
