@@ -230,6 +230,7 @@ public class PlayerController {
 				player.setRegion(new Region(){{setCode(code);}});
 				player.setCreateTime(LocalDateTime.now());
 				player.setStatus((byte)2);
+				player.setTotalScore(0);
 				Players playerIsApply = playersService.getPlayerIsApply(playerName, qq);
 				Players players;
 				if(playerIsApply == null) players = playersService.savePlayer(player);
