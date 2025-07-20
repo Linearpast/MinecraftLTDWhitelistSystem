@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>申请管理</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <style>
+        .operation-container {
+            margin-bottom: 10px;
+        }
+        .status-label {
+            display: inline-block;
+            padding: 0px 25px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .status-approved {
+            background-color: rgba(76, 175, 80, 0.15);
+            color: #2e7d32;
+        }
+        .status-pending {
+            background-color: rgba(158, 158, 158, 0.15);
+            color: #616161;
+        }
+        .status-rejected {
+            background-color: rgba(244, 67, 54, 0.15);
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="content-container">
+        <div class="layui-card-header">申请管理</div>
+        <div class="layui-card-body">
+            <!-- 搜索区域 -->
+            <div class="operation-container">
+                <form class="layui-form" id="searchForm">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">玩家名称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="playerName" placeholder="请输入玩家名称" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">qq号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="qq" placeholder="请输入qq号" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">状态</label>
+                            <div class="layui-input-inline">
+                                <select name="status">
+                                    <option value="">全部</option>
+                                    <option value="1">已通过</option>
+                                    <option value="2">未通过</option>
+                                    <option value="3">已拒绝</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">答题分数</label>
+                            <div class="layui-input-inline" style="width: 100px;">
+                                <input type="number" name="minValue" placeholder="最小值" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid">-</div>
+                            <div class="layui-input-inline" style="width: 100px;">
+                                <input type="number" name="maxValue" placeholder="最大值" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button class="layui-btn" lay-submit lay-filter="searchBtn">
+                                <i class="layui-icon layui-icon-search"></i>搜索
+                            </button>
+                            <button type="reset" class="layui-btn layui-btn-primary">
+                                <i class="layui-icon layui-icon-refresh"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="operation-container" style="margin-bottom: 10px">
+                <button class="layui-btn" id="addBtn">
+                    <i class="layui-icon layui-icon-add-1"></i>添加
+                </button>
+                <button class="layui-btn layui-btn-danger" id="batchDeleteBtn">
+                    <i class="layui-icon layui-icon-delete"></i>批量删除
+                </button>
+            </div>
+
+            <!-- 表格区域 -->
+            <table id="playersTable" lay-filter="playersTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 添加/编辑表单 -->
+<div id="formDialog" style="display: none; padding: 20px;">
+    <form class="layui-form" id="playerForm" lay-filter="playerForm">
+        <input type="hidden" name="id">
+        <input type="hidden" name="pid">
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">玩家名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="playerName" required lay-verify="required" placeholder="请输入玩家名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">玩家qq</label>
+            <div class="layui-input-block">
+                <input type="text" name="qq" required lay-verify="required" placeholder="请输入qq" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮编地址</label>
+            <div class="layui-input-block">
+                <input type="number" name="code" id="codeInput" required readonly lay-verify="required" placeholder="" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">所在地区</label>
+            <div class="layui-input-inline">
+                <select id="provinceSelect" lay-filter="province">
+                    <option value="">请选择省份</option>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <select id="citySelect" disabled lay-filter="city">
+                    <option value="">请选择城市</option>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <select id="districtSelect" disabled lay-filter="district">
+                    <option value="">请选择区县</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">申请描述</label>
+            <div class="layui-input-block">
+                <textarea name="description" required lay-verify="required" placeholder="请输入描述" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">申请状态</label>
+            <div class="layui-input-block">
+                <select name="status" required lay-verify="required">
+                    <option value="">请选择状态</option>
+                    <option value="1">已通过</option>
+                    <option value="2">未通过</option>
+                    <option value="3">已拒绝</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">答题分数</label>
+            <div class="layui-input-block">
+                <input type="text" name="totalScore" required lay-verify="required" placeholder="" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">创建时间</label>
+            <div class="layui-input-block">
+                <input type="text" name="createTime" class="layui-input" id="createTimePicker">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="formSubmit">提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 内容详情弹窗 -->
+<div id="playerDialog" style="display: none; padding: 20px;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">玩家名称</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailPlayerName" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">uuid</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailUuid" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">qq</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailQQ" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">地址</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailRegion" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">答题得分</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailScore" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">处理人</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailOperator" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">申请时间</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailCreateTime" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">申请描述</label>
+        <div class="layui-input-block">
+            <textarea id="detailDescription" readonly class="layui-textarea" style="min-height: 200px;"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="tableOperation">
+    <a class="layui-btn layui-btn-xs" lay-event="detail">查看</a>
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    {{# if(d.status != 1) { }}
+    <a class="layui-btn layui-btn-xs" lay-event="pass">通过</a>
+    {{# } }}
+    {{# if(d.status != 3) { }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="deny">拒绝</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+</script>
+<!-- 状态列模板 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1) { }}
+    <span class="status-label status-approved">已通过</span>
+    {{# } else if(d.status == 2) { }}
+    <span class="status-label status-pending">未通过</span>
+    {{# } else if(d.status == 3) { }}
+    <span class="status-label status-rejected">已拒绝</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="activeTpl">
+    {{# if(d.confirmationEmail?.active) { }}
+    <span class="status-label status-approved">已激活</span>
+    {{# } else { }}
+    <span class="status-label status-rejected">未激活</span>
+    {{# } }}
+</script>
+
+<script src="/js/jquery.3.6.0.js"></script>
+<script src="/layui/layui.js"></script>
+<script th:inline="none">
+    function initCascader() {
+        // 加载省份数据
+        $.ajax({
+            url: "/api/region/findRegion",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ level: 1 }),
+            success: function(data) {
+                const $province = $('#provinceSelect');
+                $province.empty().append('<option value="">请选择省份</option>');
+                data.data.forEach(region => {
+                    $province.append($('<option></option>').val(region.code).text(region.name));
+                });
+                layui.form.render('select'); // 重新渲染下拉框
+            },
+            error: function() {
+                console.error('省份数据加载失败');
+            }
+        });
+    }
+    layui.form.on('select(province)', function(data){
+        loadRegion(data.value, '#citySelect', '#districtSelect');
+        $('#codeInput').val(data.value);
+    });
+    layui.form.on('select(city)', function(data){
+        loadRegion(data.value, '#districtSelect', null);
+        $('#codeInput').val(data.value);
+    });
+    layui.form.on('select(district)', function(data){
+        $('#codeInput').val(data.value);
+    });
+    function loadRegion(code, currentSelector, nextSelector) {
+        if (!code) return;
+
+        $.ajax({
+            url: "/api/region/findRegion",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ parentCode: code }),
+            success: function(data) {
+                const $current = $(currentSelector);
+                let $next = nextSelector ? $(nextSelector) : null;
+
+                // 清空当前选项并添加默认
+                $current.empty().append(`<option value="">${nextSelector ? '请选择城市' : '请选择区县'}</option>`);
+
+                // 填充数据
+                data.data.forEach(region => {
+                    $current.append($('<option></option>').val(region.code).text(region.name));
+                });
+
+                // 启用当前下拉
+                $current.prop('disabled', false);
+
+                // 处理下级区域
+                if ($next) {
+                    $next.empty().append('<option value="">请选择</option>')
+                        .prop('disabled', true); // 禁用下级
+                }
+
+                // 重置更下级区域
+                if (nextSelector && $(nextSelector).next('select[id$="Select"]').length) {
+                    $(nextSelector).nextAll('select[id$="Select"]').each(function() {
+                        $(this).empty().append('<option value="">请选择</option>')
+                            .prop('disabled', true);
+                    });
+                }
+
+                layui.form.render('select'); // 重新渲染下拉框
+            },
+            error: function() {
+                console.error('区域数据加载失败');
+            }
+        });
+    }
+    layui.use(['table', 'form', 'layer', 'jquery'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+        var $ = layui.jquery;
+
+        initCascader();
+
+        // 初始化表格
+        var tableIns = table.render({
+            elem: '#playersTable',
+            url: '/api/player/getApply',
+            method: 'post',
+            page: true,
+            request: {
+                pageName: 'page',
+                limitName: 'size'
+            },
+            response: {
+                statusName: 'code',
+                statusCode: 200,
+                countName: 'count',
+                dataName: 'data'
+            },
+            cols: [[
+                {type: 'checkbox', fixed: 'left', width: 50},
+                {field: 'id', title: 'ID', width: 60, sort: true},
+                {field: 'playerName', title: '玩家名称', width: 140, sort: true},
+                {field: 'uuid', title: '玩家uuid', width: 300},
+                {field: 'region.fullName', title: '玩家住址', width: 180, templet: function (d) {
+                        return (d.region?.fullName === null ? '无数据' : d.region?.fullName);
+                    }},
+                {field: 'qq', title: 'qq号', width: 130, sort: true},
+                {field: 'totalScore', title: '分数', width: 80, sort: true},
+                {field: 'createTime', title: '申请时间', width: 160, sort: true, templet: function(d){
+                        return (d.createTime === null ? '无数据' : (new Date(d.createTime).toLocaleString()))
+                    }},
+                {field: 'confirmationEmail.active', title: '激活', width: 120, sort: true, templet: '#activeTpl'},
+                {field: 'status', title: '状态', width: 120, sort: true, templet: '#statusTpl'},
+                {fixed: 'right', title: '操作', width: 280, align: 'center', toolbar: '#tableOperation'}
+            ]],
+            initSort: {
+                field: 'createTime',
+                type: 'asc'
+            }
+        });
+
+        // 搜索按钮点击事件
+        form.on('submit(searchBtn)', function (data) {
+            // 获取表单数据
+            var searchParams = {
+                playerName: data.field.playerName || null,
+                qq: data.field.qq || null,
+                uuid: data.field.uuid || null,
+                status: data.field.status || null,
+                minValue: data.field.minValue || null,
+                maxValue: data.field.maxValue || null
+            };
+
+            // 重载表格数据
+            tableIns.reload({
+                where: searchParams,
+                page: {curr: 1}
+            });
+            return false;
+        });
+
+        // 添加按钮点击事件
+        $('#addBtn').click(function () {
+            initCascader()
+            $('citySelect').empty().prop('disabled', true)
+            $('districtSelect').empty().prop('disabled', true)
+            form.val('playerForm', {
+                "id": null,
+                "pid": null,
+                "playerName": null,
+                "uuid": null,
+                "qq": null,
+                "code": 110000,
+                "description": null,
+                "totalScore": null,
+                "createTime": null,
+                "status": null,
+            });
+            layer.open({
+                title: '添加白名单用户',
+                type: 1,
+                area: ['800px', '650px'],
+                content: $('#formDialog')
+            });
+            laydate.render({
+                elem: "#createTimePicker",
+                type: "datetime",
+                format: "yyyy-MM-dd HH:mm:ss"
+            });
+        });
+
+        $('#batchDeleteBtn').click(function () {
+            var checkStatus = table.checkStatus('playersTable');
+            var data = checkStatus.data;
+            if (data.length === 0) {
+                layer.msg('请选择要删除的玩家');
+                return;
+            }
+
+            layer.confirm('确定要删除选中的玩家吗？', function (index) {
+                var ids = data.map(function (item) {
+                    return item.id;
+                });
+                $.ajax({
+                    url: '/api/player/batchDelete',
+                    type: 'delete',
+                    contentType: 'application/json',
+                    data: JSON.stringify(ids),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('删除成功');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '删除失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('删除失败');
+                    }
+                });
+                layer.close(index);
+            });
+        });
+
+        // 表格工具栏事件
+        table.on('tool(playersTable)', function (obj) {
+            var data = obj.data;
+
+            if (obj.event === 'detail') {
+                // 显示通知详情
+                $('#detailPlayerName').val(data.playerName);
+                $('#detailUuid').val(data.uuid);
+                $('#detailQQ').val(data.qq);
+                $('#detailRegion').val(data.region.fullName);
+                $('#detailScore').val(data.totalScore);
+                $('#detailOperator').val(data.operators?.username);
+                $('#detailCreateTime').val(data.createTime?.replace('T'," "));
+                $('#detailDescription').val(data.description);
+                layer.open({
+                    title: '玩家申请详情',
+                    type: 1,
+                    area: ['600px', '500px'],
+                    content: $('#playerDialog')
+                });
+            } else if (obj.event === 'edit') {
+                initCascader()
+                $('citySelect').empty().prop('disabled', true)
+                $('districtSelect').empty().prop('disabled', true)
+                const formattedTime = data.createTime?.slice(0, 19);
+                form.val('playerForm', {
+                    "id": data.id,
+                    "pid": data.operators.id,
+                    "playerName": data.playerName,
+                    "uuid": data.uuid,
+                    "qq": data.qq,
+                    "code": data.region.code,
+                    "description": data.description,
+                    "totalScore": data.totalScore,
+                    "createTime": data.createTime,
+                    "status": data.status
+                });
+                layer.open({
+                    title: '编辑',
+                    type: 1,
+                    area: ['800px', '650px'],
+                    content: $('#formDialog')
+                });
+                laydate.render({
+                    elem: "#createTimePicker",
+                    type: "datetime",
+                    format: "yyyy-MM-dd HH:mm:ss",
+                    value: formattedTime?.replace("T", " ") // Layui 要求空格
+                });
+            } else if (obj.event === 'pass'){
+                $.ajax({
+                    url: '/api/player/changeStatus',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({id: data.id, status: 1}),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('已通过');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '操作失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败');
+                    }
+                });
+            } else if (obj.event === 'deny'){
+                $.ajax({
+                    url: '/api/player/changeStatus',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({id: data.id, status: 3}),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('已拒绝');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '操作失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败');
+                    }
+                });
+            } else if (obj.event === 'delete') {
+                layer.confirm('确定要删除该白名单玩家吗？', function (index) {
+                    $.ajax({
+                        url: '/api/player/delete/' + data.id,
+                        type: 'delete',
+                        success: function (res) {
+                            if (res.code === 200) {
+                                layer.msg('删除成功');
+                                tableIns.reload();
+                            } else {
+                                layer.msg(res.msg || '删除失败');
+                            }
+                        },
+                        error: function () {
+                            layer.msg('删除失败');
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // 表单提交事件
+        form.on('submit(formSubmit)', function (data) {
+            $.ajax({
+                url: '/api/player/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data.field),
+                success: function (res) {
+                    if (res.code === 200) {
+                        layer.msg('操作成功');
+                        layer.closeAll();
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '操作失败');
+                    }
+                },
+                error: function () {
+                    layer.msg('操作失败');
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

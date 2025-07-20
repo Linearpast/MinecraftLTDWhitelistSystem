@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>答题详情</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <style>
+        .operation-container {
+            margin-bottom: 10px;
+        }
+        .status-label {
+            display: inline-block;
+            padding: 0px 25px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .status-approved {
+            background-color: rgba(76, 175, 80, 0.15);
+            color: #2e7d32;
+        }
+        .status-pending {
+            background-color: rgba(158, 158, 158, 0.15);
+            color: #616161;
+        }
+        .status-rejected {
+            background-color: rgba(244, 67, 54, 0.15);
+            color: #c62828;
+        }
+        .flex-score {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .flex-score input {
+            display: inline-block;
+            width: 80px;
+            block-size: auto;
+            flex: 0 1 auto;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="content-container">
+        <div class="layui-card-header">答题详情</div>
+        <div class="layui-card-body">
+            <!-- 搜索区域 -->
+            <div class="operation-container">
+                <form class="layui-form" id="searchForm">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">玩家名称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="playerName" placeholder="请输入玩家名称" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">qq号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="qq" placeholder="请输入qq号" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">状态</label>
+                            <div class="layui-input-inline">
+                                <select name="status">
+                                    <option value="">全部</option>
+                                    <option value="1">已通过</option>
+                                    <option value="2">未通过</option>
+                                    <option value="3">已拒绝</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">答题分数</label>
+                            <div class="layui-input-inline" style="width: 100px;">
+                                <input type="number" name="minValue" placeholder="最小值" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid">-</div>
+                            <div class="layui-input-inline" style="width: 100px;">
+                                <input type="number" name="maxValue" placeholder="最大值" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button class="layui-btn" lay-submit lay-filter="searchBtn">
+                                <i class="layui-icon layui-icon-search"></i>搜索
+                            </button>
+                            <button type="reset" class="layui-btn layui-btn-primary">
+                                <i class="layui-icon layui-icon-refresh"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="operation-container" style="margin-bottom: 10px">
+                <button class="layui-btn" id="batchPassBtn">
+                    <i class="layui-icon layui-icon-success"></i>批量通过
+                </button>
+                <button class="layui-btn layui-btn-danger" id="batchDenyBtn">
+                    <i class="layui-icon layui-icon-error"></i>批量拒绝
+                </button>
+            </div>
+
+            <!-- 表格区域 -->
+            <table id="playersTable" lay-filter="playersTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 添加/编辑表单 -->
+<div id="formDialog" style="display: none; padding: 20px;">
+    <form class="layui-form" id="playerForm" lay-filter="playerForm">
+        <input type="hidden" name="id" id="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">玩家名称</label>
+            <div class="layui-input-block">
+                <input type="text" id="playerName" name="playerName" required lay-verify="required" placeholder="请输入玩家名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">玩家qq</label>
+            <div class="layui-input-block">
+                <input type="text" id="qq" name="qq" required lay-verify="required" placeholder="请输入qq" class="layui-input">
+            </div>
+        </div>
+        <div class="row" id="questionContainer"></div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="formSubmit">提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="tableOperation">
+    <a class="layui-btn layui-btn-xs" lay-event="detailEdit">批阅</a>
+    {{# if(d.status != 1) { }}
+    <a class="layui-btn layui-btn-xs" lay-event="pass">通过</a>
+    {{# } }}
+    {{# if(d.status != 3) { }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="deny">拒绝</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+</script>
+<!-- 状态列模板 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1) { }}
+    <span class="status-label status-approved">已通过</span>
+    {{# } else if(d.status == 2) { }}
+    <span class="status-label status-pending">未通过</span>
+    {{# } else if(d.status == 3) { }}
+    <span class="status-label status-rejected">已拒绝</span>
+    {{# } }}
+</script>
+<script type="text/html" id="activeTpl">
+    {{# if(d.active) { }}
+    <span class="status-label status-approved">已激活</span>
+    {{# } else { }}
+    <span class="status-label status-rejected">未激活</span>
+    {{# } }}
+</script>
+<script type="text/html" id="readStatusTpl">
+    {{# if(d.readStatus) { }}
+    <span class="status-label status-approved">已批阅</span>
+    {{# } else { }}
+    <span class="status-label status-rejected">未批阅</span>
+    {{# } }}
+</script>
+
+<script id="questionData" type="text/html">
+    <div>
+        {{# if(d.optionAnswers != null) { }}
+        <div class="layui-collapse" lay-accordion>
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title text-primary">一、选择题 (左侧为标准答案)
+                    <i class="layui-icon layui-colla-icon"></i>
+                </h2>
+                <div class="layui-colla-content">
+                    <div id="optionContainer"></div>
+                </div>
+            </div>
+        </div>
+        {{# } }}
+
+        {{# if(d.blankAnswers != null) { }}
+        <div class="layui-collapse" lay-accordion>
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title text-primary">二、填空题 (${}内为标准答案})
+                    <i class="layui-icon layui-colla-icon"></i>
+                </h2>
+                <div class="layui-colla-content">
+                    <div id="blankContainer"></div>
+                </div>
+            </div>
+        </div>
+        {{# } }}
+
+        {{# if(d.textAnswers != null) { }}
+        <div class="layui-collapse" lay-accordion>
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title text-primary">三、简答题 (无标准答案)
+                    <i class="layui-icon layui-colla-icon"></i>
+                </h2>
+                <div class="layui-colla-content">
+                    <div id="textareaContainer"></div>
+                </div>
+            </div>
+        </div>
+        {{# } }}
+    </div>
+</script>
+
+<script id="optionTpl" type="text/html">
+    {{# for(let i = 0; i < d.optionAnswers.length; i++) { }}
+    <div class="layui-colla-item form-label" style="padding: 20px;">
+        <input type="hidden" class="question-id" value="{{d.optionAnswers[i].questions.id}}">
+        <span style="font-size: medium">{{(i+1) + '. ' + d.optionAnswers[i].questions.title}}</span>
+        {{# const options = JSON.parse(d.optionAnswers[i].questions.options) }}
+        {{# const answers = JSON.parse(d.optionAnswers[i].answer) }}
+        {{# for(let j = 0; j < options[0].length; j++) { }}
+        <div class="layui-form-item" style="position: relative; margin-bottom: 10px">
+            <!--标准答案-->
+            <div class="layui-input-inline" style="width: 40px; text-align: center;">
+                {{# if(options[1][j]) { }}
+                <input type="checkbox" class="option-checkbox" checked disabled>
+                {{# } else { }}
+                <input type="checkbox" class="option-checkbox" disabled>
+                {{# } }}
+            </div>
+            <!--玩家答案-->
+            <div class="layui-input-inline" style="width: 40px; text-align: center;">
+                {{# if(answers[j] === options[1][j] && answers[j]) { }}
+                <!--正确选项 正确答案-->
+                <input type="checkbox" class="option-checkbox" checked disabled>
+                {{# } else if(answers[j] === options[1][j] && !answers[j]) { }}
+                <!--错误选项 正确答案-->
+                <input type="checkbox" class="option-checkbox" disabled>
+                {{# } else if(answers[j] != options[1][j] && answers[j]) { }}
+                <!--错误选项 错误答案-->
+                <input type="checkbox" class="option-checkbox" checked disabled>
+                {{# } else { }}
+                <!--正确选项 错误答案-->
+                <input type="checkbox" class="option-checkbox" disabled>
+                {{# } }}
+            </div>
+            <div class="layui-input-inline" style="width: 80%">
+                <input type="text" class="layui-input option-input" readOnly value="{{options[0][j]}}">
+            </div>
+        </div>
+        {{# } }}
+        <div class="layui-form-item flex-score">
+            <span>得分：</span>
+            <input type="number" class="layui-input current-score" value="{{d.optionAnswers[i].score}}">
+            <span>{{'/' + d.optionAnswers[i].questions.score}}</span>
+        </div>
+    </div>
+    {{# } }}
+</script>
+<script id="blankTpl" type="text/html">
+    {{# for(let i = 0; i < d.blankAnswers.length; i++) { }}
+    <div class="layui-colla-item form-label" style="text-align: left; padding: 20px; width: 100%;">
+        <input type="hidden" class="question-id" value="{{d.blankAnswers[i].questions.id}}">
+        <span style="font-size: medium">{{(i+1) + '. ' + d.blankAnswers[i].questions.title}}</span>
+        {{# const answers = JSON.parse(d.blankAnswers[i].answer) }}
+        <div class="layui-form-item">
+            <span>标准答案</span>
+            <textarea class="layui-textarea" style="width: 100%" rows="3" readonly>{{d.blankAnswers[i].questions.options}}</textarea>
+            {{# for(let j = 0; j < answers.length; j++) { }}
+            <span>{{'玩家第' + (j+1) + '个答案'}}</span>
+            <input type="text" class="layui-input blank-answer" value="{{answers[j]}}" readonly>
+            {{# } }}
+        </div>
+        <div class="layui-form-item flex-score">
+            <span>得分：</span>
+            <input type="number" class="layui-input current-score" value="{{d.blankAnswers[i].score}}">
+            <span>{{'/' + d.blankAnswers[i].questions.score}}</span>
+        </div>
+    </div>
+    {{# } }}
+</script>
+<script id="textareaTpl" type="text/html">
+    {{# for(let i = 0; i < d.textAnswers.length; i++) { }}
+    <div class="layui-colla-item form-label" style="text-align: left; padding: 20px; width: 100%;">
+        <input type="hidden" class="question-id" value="{{d.textAnswers[i].questions.id}}">
+        <span style="font-size: medium">{{(i+1) + '. ' + d.textAnswers[i].questions.title}}</span>
+        <div class="layui-form-item">
+            <textarea class="layui-textarea" style="width: 100%" rows="3" readonly>{{d.textAnswers[i].answer}}</textarea>
+        </div>
+        <div class="layui-form-item flex-score">
+            <span>得分：</span>
+            <input type="number" class="layui-input current-score" value="{{d.textAnswers[i].score}}">
+            <span>{{'/' + d.textAnswers[i].questions.score}}</span>
+        </div>
+    </div>
+    {{# } }}
+</script>
+
+<script src="/js/jquery.3.6.0.js"></script>
+<script src="/layui/layui.js"></script>
+<script th:inline="none">
+    layui.use(['table', 'form', 'layer', 'jquery'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+        var $ = layui.jquery;
+
+        // 初始化表格
+        var tableIns = table.render({
+            elem: '#playersTable',
+            url: '/api/playerAnswer/getAll',
+            method: 'post',
+            contentType: 'application/json',
+            page: true,
+            request: {
+                pageName: 'page',
+                limitName: 'size'
+            },
+            response: {
+                statusName: 'code',
+                statusCode: 200,
+                countName: 'count',
+                dataName: 'data'
+            },
+            cols: [[
+                {type: 'checkbox', fixed: 'left', width: 50},
+                {field: 'id', title: 'ID', width: 60, sort: true},
+                {field: 'playerName', title: '玩家名称', width: 350, sort: true},
+                {field: 'qq', title: 'qq号', width: 325, sort: true},
+                {field: 'score', title: '答题分数', width: 200, sort: true, templet: function (d) {
+                        return (d.score + '/' + d.fullScore);
+                    }},
+                {field: 'active', title: '激活', width: 120, sort: true, templet: '#activeTpl'},
+                {field: 'readStatus', title: '批阅', width: 120, sort: true, templet: '#readStatusTpl'},
+                {field: 'status', title: '状态', width: 120, sort: true, templet: '#statusTpl'},
+                {fixed: 'right', title: '操作', width: 280, align: 'center', toolbar: '#tableOperation'}
+            ]],
+            initSort: {
+                field: 'score',
+                type: 'asc'
+            }
+        });
+
+        // 搜索按钮点击事件
+        form.on('submit(searchBtn)', function (data) {
+            // 获取表单数据
+            var searchParams = {
+                playerName: data.field.playerName || null,
+                qq: data.field.qq || null,
+                status: data.field.status || null,
+                minValue: data.field.minValue || null,
+                maxValue: data.field.maxValue || null
+            };
+
+            // 重载表格数据
+            tableIns.reload({
+                where: searchParams,
+                page: {curr: 1}
+            });
+            return false;
+        });
+
+        $('#batchPassBtn').click(function () {
+            var checkStatus = table.checkStatus('playersTable');
+            var data = checkStatus.data;
+            if (data.length === 0) {
+                layer.msg('请选择玩家');
+                return;
+            }
+
+            layer.confirm('确定要通过选中的玩家的申请吗？', function (index) {
+                var ids = data.map(function (item) {
+                    return item.id;
+                });
+                $.ajax({
+                    url: '/api/player/batchChangeStatus',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ids:ids, status:1}),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('操作成功');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '操作失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败');
+                    }
+                });
+                layer.close(index);
+            });
+        });
+
+        $('#batchDenyBtn').click(function () {
+            var checkStatus = table.checkStatus('playersTable');
+            var data = checkStatus.data;
+            if (data.length === 0) {
+                layer.msg('请选择玩家');
+                return;
+            }
+
+            layer.confirm('确定要拒绝选中的玩家的申请吗？', function (index) {
+                var ids = data.map(function (item) {
+                    return item.id;
+                });
+                $.ajax({
+                    url: '/api/player/batchChangeStatus',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ids:ids, status:3}),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('操作成功');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '操作失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败');
+                    }
+                });
+                layer.close(index);
+            });
+        });
+
+        // 表格工具栏事件
+        table.on('tool(playersTable)', function (obj) {
+            var data = obj.data;
+
+            if (obj.event === 'detailEdit') {
+                // 显示通知详情
+                $('#id').val(data.id);
+                $('#playerName').val(data.playerName);
+                $('#qq').val(data.qq);
+                var questionDom = layui.laytpl($('#questionData').html()).render(data);
+                var $questionDom = $(questionDom);
+                var textareaData = null, optionData = null, blankData = null;
+                if(data.textAnswers){
+                    textareaData = layui.laytpl($('#textareaTpl').html()).render(data);
+                }
+                if(data.optionAnswers){
+                    optionData = layui.laytpl($('#optionTpl').html()).render(data);
+                }
+                if(data.blankAnswers) {
+                    blankData = layui.laytpl($('#blankTpl').html()).render(data);
+                }
+                $questionDom.find('#textareaContainer').html(textareaData)
+                $questionDom.find('#optionContainer').html(optionData)
+                $questionDom.find('#blankContainer').html(blankData)
+
+                var $questionContainer = $('#questionContainer');
+                $questionContainer.html($questionDom.html());
+                $questionContainer.on('input', '#blankContainer .blank-answer', function () {
+                    adjustInputWidth($(this));
+                });
+                $('#questionContainer #blankContainer .blank-answer').each(function () {
+                    adjustInputWidth($(this));
+                });
+                layui.element.render('collapse');
+                layui.form.render();
+                layer.open({
+                    title: '玩家申请详情',
+                    type: 1,
+                    area: ['90%', '90%'],
+                    content: $('#formDialog')
+                });
+            } else if (obj.event === 'pass'){
+                $.ajax({
+                    url: '/api/player/changeStatus',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({id: data.id, status: 1}),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('已通过');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '操作失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败');
+                    }
+                });
+            } else if (obj.event === 'deny'){
+                $.ajax({
+                    url: '/api/player/changeStatus',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({id: data.id, status: 3}),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('已拒绝');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '操作失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败');
+                    }
+                });
+            } else if (obj.event === 'delete') {
+                layer.confirm('确定要删除该白名单玩家吗？', function (index) {
+                    $.ajax({
+                        url: '/api/player/delete/' + data.id,
+                        type: 'delete',
+                        success: function (res) {
+                            if (res.code === 200) {
+                                layer.msg('删除成功');
+                                tableIns.reload();
+                            } else {
+                                layer.msg(res.msg || '删除失败');
+                            }
+                        },
+                        error: function () {
+                            layer.msg('删除失败');
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+        function adjustInputWidth($input) {
+            const value = $input.val().trim() || '请输入答案';
+
+            // 获取输入框的字体样式（确保与span一致）
+            const fontStyle = {
+                fontFamily: $input.css('font-family'),
+                fontSize: $input.css('font-size'),
+                fontWeight: $input.css('font-weight'),
+                lineHeight: $input.css('line-height'),
+                whiteSpace: 'nowrap'  // 不换行，确保文字一行显示
+            };
+
+            // 创建隐藏的span元素（用于计算文字宽度）
+            const $span = $('<span></span>')
+                    .text(value)
+                    .css(fontStyle)
+                    .css({
+                        visibility: 'hidden',  // 隐藏但保留布局
+                        position: 'absolute',  // 脱离文档流，不影响页面
+                        top: '-9999px'         // 放到页面外，避免干扰
+                    });
+
+            // 添加span到页面（必须添加才能获取宽度）
+            $('body').append($span);
+            // 获取文字宽度（span的outerWidth，不含边框）
+            const textWidth = $span.outerWidth();
+            // 移除span（避免占用内存）
+            $span.remove();
+
+            // 计算输入框的内边距总和（左右padding）
+            const paddingLeft = parseInt($input.css('padding-left'));
+            const paddingRight = parseInt($input.css('padding-right'));
+            const totalPadding = paddingLeft + paddingRight;
+
+            // 计算输入框需要的宽度（文字宽度 + 内边距）
+            const inputWidth = textWidth + totalPadding + 5;
+            // 获取最小宽度（避免输入框过窄）
+            const minWidth = parseInt($input.css('min-width'));
+
+            // 设置输入框宽度（取最大值，不小于最小宽度）
+            $input.css('width', Math.max(inputWidth, minWidth) + 'px');
+        }
+
+        // 表单提交事件
+        form.on('submit(formSubmit)', function () {
+            var json = {
+                playerId: $('#id').val()
+            };
+            var array = [];
+            $('#questionContainer').find('.form-label').each(function () {
+                var $this = $(this);
+                var item = {};
+                var qid = $this.find('.question-id').val();
+                var score = $this.find('.current-score').val() || null;
+                item['questionId'] = qid;
+                item['score'] = score;
+                array.push(item);
+            })
+            json['answerScore'] = array;
+            $.ajax({
+                url: '/api/playerAnswer/markingAnswer',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(json),
+                success: function (res) {
+                    if (res.code === 200) {
+                        layer.msg('操作成功');
+                        layer.closeAll();
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '操作失败');
+                    }
+                },
+                error: function () {
+                    layer.msg('操作失败');
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

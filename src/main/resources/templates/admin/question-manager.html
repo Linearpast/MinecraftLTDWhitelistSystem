@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>问卷题目管理</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <style>
+        .option-item { position: relative; margin-bottom: 10px; }
+        .delete-option { position: absolute; right: -30px; top: 5px; cursor: pointer; }
+        .type-label {
+            display: inline-block;
+            padding: 0px 25px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .type-option {
+            background-color: rgba(76, 175, 80, 0.15);
+            color: #2e7d32;
+        }
+        .type-blank {
+            background-color: rgba(83, 124, 175, 0.15);
+            color: #2763a1;
+        }
+        .type-text {
+            background-color: rgba(244, 67, 54, 0.15);
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="content-container">
+        <!-- 现有题目列表 -->
+        <div class="layui-card-header">已有题目</div>
+        <div class="layui-card-body">
+            <div class="operation-container" style="margin-bottom: 10px">
+                <button class="layui-btn" id="addBtn">
+                    <i class="layui-icon layui-icon-add-1"></i>添加题目
+                </button>
+                <button class="layui-btn layui-btn-danger" id="batchDeleteBtn">
+                    <i class="layui-icon layui-icon-delete"></i>批量删除
+                </button>
+            </div>
+            <table id="questionTable" lay-filter="questionTable"></table>
+        </div>
+    </div>
+</div>
+
+<div id="questionModal" style="display: none; padding: 20px;">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <form class="layui-form" id="questionForm">
+                <input type="hidden" name="optionsData" id="optionsData">
+                <input type="hidden" name="id" id="id">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">分值</label>
+                        <div class="layui-input-inline">
+                            <input type="number" name="score" id="score" class="layui-input">
+                        </div>
+                        <div class="layui-input-inline" style="margin-right: 0">
+                            <button class="layui-btn" lay-submit lay-filter="submitQuestion">保存题目</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">题目类型</label>
+                    <div class="layui-input-block">
+                        <select name="type" id="type" lay-filter="questionType">
+                            <option value="">请选择</option>
+                            <option value="1">单选题</option>
+                            <option value="2">填空题</option>
+                            <option value="3">问答题</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">题目标题</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="title" id="title" placeholder="请输入题目" autocomplete="off"
+                               class="layui-input">
+                    </div>
+                </div>
+
+                <!-- 单选题选项区域 -->
+                <div id="singleChoiceArea" style="display:none;">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">选项设置</label>
+                        <div class="layui-input-block">
+                            <button type="button" class="layui-btn layui-btn-sm" id="addOption">
+                                <i class="layui-icon">&#xe654;</i>添加选项
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="optionsContainer"></div>
+                </div>
+
+                <!-- 填空题编辑区域 -->
+                <div id="fillBlankArea" style="display:none;">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">填空设置</label>
+                        <div class="layui-input-block">
+                            <textarea id="blankContent" class="layui-textarea" name="blankContent"
+                                      placeholder="在需要填空的位置使用${答案}标记，例如：闲趣时坞缩写是${LTD}；工作台需要${4}个木板合成"></textarea>
+                            <div class="layui-form-mid layui-word-aux">
+                                提示：使用 ${答案} 标记填空位置
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="essayArea" style="display:none;"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="questionDialog" style="display: none; padding: 20px;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">类型</label>
+        <div class="layui-input-block" id="detailType">
+
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">分值</label>
+        <div class="layui-input-block">
+            <input type="number" id="detailScore" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">题目</label>
+        <div class="layui-input-block">
+            <textarea id="detailTitle" readonly class="layui-textarea"></textarea>
+        </div>
+    </div>
+    <div id="detailData">
+
+    </div>
+</div>
+
+<!-- 选项模板 -->
+<script type="text/html" id="optionTemplate">
+    <div class="option-item layui-form-item">
+        <div class="layui-input-inline" style="width: 40px; text-align: center;">
+            <input type="checkbox" class="option-checkbox">
+        </div>
+        <div class="layui-input-inline" style="width: 80%">
+            <input type="text" id="optionInput" class="layui-input option-input" required lay-verify="required" placeholder="请输入选项内容">
+        </div>
+        <div class="layui-input-inline" style="width: 40px;">
+            <i class="layui-icon layui-icon-delete delete-option" style="cursor: pointer;"></i>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="typeTpl">
+    {{# if(d.type == 1) { }}
+    <span class="type-label type-option">单选题</span>
+    {{# } else if(d.type == 2) { }}
+    <span class="type-label type-blank">填空题</span>
+    {{# } else if(d.type == 3) { }}
+    <span class="type-label type-text">简答题</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="detailQuestionTpl">
+    {{# if(d.type == 1) { }}
+    <label class="layui-form-label">选项设置</label>
+    {{# for(let i = 0; i < d.options.length; i++) { }}
+    <div class="option-item layui-form-item" style="margin-left: 15%">
+        <div class="layui-input-inline" style="width: 40px; text-align: center;">
+            {{# if(d.correct[i]) { }}
+            <input type="checkbox" class="option-checkbox" checked disabled>
+            {{# } else { }}
+            <input type="checkbox" class="option-checkbox" disabled>
+            {{# } }}
+        </div>
+        <div class="layui-input-inline" style="width: 80%">
+            <input type="text" class="layui-input option-input" value="{{d.options[i]}}" readonly>
+        </div>
+    </div>
+    {{# } }}
+    {{# } else if(d.type == 2) { }}
+    <div class="layui-form-item">
+        <label class="layui-form-label">填空题目</label>
+        <div class="layui-input-block">
+            <textarea class="layui-textarea" name="blankContent" readonly>{{d.options.replaceAll(/\$\{.*?\}/g, '(____)')}}</textarea>
+        </div>
+    </div>
+    {{# const matches = Array.from(d.options.matchAll(/\$\{([^}]+)\}/g), match => match[1]); }}
+    {{# for(let i = 0; i < matches.length; i++) { }}
+    <div class="layui-form-item">
+        <label class="layui-form-label">答案{{i+1}}</label>
+        <div class="layui-input-block">
+            <input type="text" class="layui-input option-input" value="{{matches[i]}}" readonly>
+        </div>
+    </div>
+    {{# } }}
+    {{# } else if(d.type == 3) { }}
+    {{# } }}
+</script>
+
+<script type="text/html" id="editOptionData">
+    <div class="option-item layui-form-item">
+        <div class="layui-input-inline" style="width: 40px; text-align: center;">
+            {{# if(d.correct) { }}
+            <input type="checkbox" class="option-checkbox" checked>
+            {{# } else { }}
+            <input type="checkbox" class="option-checkbox">
+            {{# } }}
+        </div>
+        <div class="layui-input-inline" style="width: 80%">
+            <input type="text"class="layui-input option-input" required lay-verify="required" value="{{d.option}}">
+        </div>
+        <div class="layui-input-inline" style="width: 40px;">
+            <i class="layui-icon layui-icon-delete delete-option" style="cursor: pointer;"></i>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="tableOperation">
+    <a class="layui-btn layui-btn-xs" lay-event="detail">详情</a>
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+</script>
+
+<script src="/layui/layui.js"></script>
+<script th:inline="none">
+    layui.use(['table', 'form', 'jquery', 'layer'], function(){
+        var table = layui.table;
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+
+        var tableIns = table.render({
+            elem: '#questionTable',
+            url: '/api/questions/getAll',
+            method: 'post',
+            page: true,
+            request: {
+                pageName: 'page',
+                limitName: 'size'
+            },
+            response: {
+                statusName: 'code',
+                statusCode: 200,
+                countName: 'count',
+                dataName: 'data'
+            },
+            cols: [[
+                {type: 'checkbox', fixed: 'left', width: 50},
+                {field: 'id', title: 'ID', width: 50, sort: true},
+                {field: 'score', title: '分值', width: 80, sort: true},
+                {field: 'type', title: '类型', width: 120, sort: true, templet: '#typeTpl'},
+                {field: 'title', title: '题目', width: 400},
+                {field: 'options', title: '内容（JSON）', width: 715},
+                {fixed: 'right', title: '操作', width: 200, align: 'center', toolbar: '#tableOperation'}
+            ]],
+            initSort: {
+                field: 'type',
+                type: 'asc'
+            }
+        });
+
+        table.on('tool(questionTable)', function (obj) {
+            var data = obj.data;
+            var json, parse;
+            if (obj.event === 'detail') {
+                $('#detailTitle').val(data.title)
+                $('#detailScore').val(data.score)
+                $('#detailType').html(layui.laytpl($('#typeTpl').html()).render(data));
+                if(data.type === 1){
+                    parse = JSON.parse(data.options);
+                    json = {
+                        type: data.type,
+                        options: parse[0],
+                        correct: parse[1]
+                    }
+                }else {
+                    json = data
+                }
+                $('#detailData').html(layui.laytpl($('#detailQuestionTpl').html()).render(json));
+
+                layer.open({
+                    title: '题目详情',
+                    type: 1,
+                    area: ['600px', '500px'],
+                    content: $('#questionDialog')
+                });
+            } else if (obj.event === 'edit') {
+                $('#questionForm')[0].reset();
+                $('#singleChoiceArea, #fillBlankArea, #essayArea').hide();
+                var $optionsContainer = $('#optionsContainer');
+
+                $optionsContainer.empty();
+                $('#score').val(data.score)
+                $('#title').val(data.title)
+                $('#type').val(data.type)
+                $('#id').val(data.id)
+                switch(data.type) {
+                    case 1: // 单选题
+                        $('#singleChoiceArea').show();
+                        parse = JSON.parse(data.options);
+                        for (let i = 0; i < parse[0].length; i++) {
+                            var html = layui.laytpl($('#editOptionData').html())
+                                .render({correct:parse[1][i], option:parse[0][i]});
+                            $optionsContainer.append(html);
+                            form.render();
+                        }
+                        break;
+                    case 2: // 填空题
+                        $('#fillBlankArea').show();
+                        $('#blankContent').val(data.options)
+                        $optionsContainer.empty();
+                        break;
+                    case 3: // 问答题
+                        $('#essayArea').show();
+                        $optionsContainer.empty();
+                        break;
+                }
+                updateOptionsData();
+                layer.open({
+                    type: 1,
+                    title: '添加新题目',
+                    area: ['800px', '600px'],
+                    content: $('#questionModal'),
+                    success: function() {
+                        // 重新渲染动态元素
+                        form.render();
+                    }
+                });
+            } else if (obj.event === 'delete') {
+                layer.confirm('确定要删除该题目吗？', function (index) {
+                    $.ajax({
+                        url: '/api/questions/delete/' + data.id,
+                        type: 'delete',
+                        success: function (res) {
+                            if (res.code === 200) {
+                                layer.msg('删除成功');
+                                tableIns.reload();
+                            } else {
+                                layer.msg(res.msg || '删除失败');
+                            }
+                        },
+                        error: function () {
+                            layer.msg('删除失败');
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // 初始化单选题选项
+        function initSingleChoice() {
+            $('#optionsContainer').empty();
+            for(var i=0; i<4; i++) {
+                addOptionItem();
+            }
+        }
+
+        // 添加选项项
+        function addOptionItem() {
+            var html = layui.laytpl($('#optionTemplate').html()).render();
+            $('#optionsContainer').append(html);
+            form.render();
+            updateOptionsData();
+        }
+
+        // 更新选项数据到隐藏域
+        function updateOptionsData() {
+            var options = [];
+            $('.option-item').each(function(){
+                var input = $(this).find('.option-input').val();
+                var check = $(this).find('.option-checkbox').prop('checked');
+                options.push({check,input});
+            });
+            $('#optionsData').val(JSON.stringify(options));
+        }
+
+        $('#addBtn').click(function() {
+            // 重置表单状态
+            $('#questionForm')[0].reset();
+            $('#singleChoiceArea, #fillBlankArea, #essayArea').hide();
+            $('#id').val(null)
+            updateOptionsData()
+
+            // 显示浮窗
+            layer.open({
+                type: 1,
+                title: '添加新题目',
+                area: ['800px', '600px'],
+                content: $('#questionModal'),
+                success: function() {
+                    // 重新渲染动态元素
+                    form.render();
+                }
+            });
+        });
+
+        $('#batchDeleteBtn').click(function () {
+            var checkStatus = table.checkStatus('questionTable');
+            var data = checkStatus.data;
+            if (data.length === 0) {
+                layer.msg('请选择要删除的问题');
+                return;
+            }
+
+            layer.confirm('确定要删除选中的问题吗？', function (index) {
+                var ids = data.map(function (item) {
+                    return item.id;
+                });
+                $.ajax({
+                    url: '/api/questions/batchDelete',
+                    type: 'delete',
+                    contentType: 'application/json',
+                    data: JSON.stringify(ids),
+                    success: function (res) {
+                        if (res.code === 200) {
+                            layer.msg('删除成功');
+                            tableIns.reload();
+                        } else {
+                            layer.msg(res.msg || '删除失败');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('删除失败');
+                    }
+                });
+                layer.close(index);
+            });
+        });
+
+        // 题目类型切换监听
+        form.on('select(questionType)', function(data){
+            $('#singleChoiceArea, #fillBlankArea, #essayArea').hide();
+            var $optionsContainer = $('#optionsContainer');
+
+            switch(data.value) {
+                case '1': // 单选题
+                    $('#singleChoiceArea').show();
+                    initSingleChoice();
+                    break;
+                case '2': // 填空题
+                    $('#fillBlankArea').show();
+                    $optionsContainer.empty();
+                    break;
+                case '3': // 问答题
+                    $('#essayArea').show();
+                    $optionsContainer.empty();
+                    break;
+            }
+            updateOptionsData();
+        });
+
+        // 添加选项按钮
+        $('#addOption').click(function(){
+            addOptionItem();
+        });
+
+        // 删除选项（事件委托）
+        $(document).on('click', '.layui-icon-delete', function(){
+            $(this).closest('.option-item').remove();
+            updateOptionsData();
+        });
+
+        // 表单提交
+        form.on('submit(submitQuestion)', function(data){
+            var formData = data.field;
+
+            // 验证和处理数据
+            if(!formData.type) {
+                layer.msg('请选择题目类型');
+                return false;
+            }
+
+            if(formData.type === '1' && (!formData.optionsData || JSON.parse(formData.optionsData).length < 2)) {
+                layer.msg('单选题至少需要2个选项');
+                return false;
+            }
+
+            updateOptionsData()
+            var val = $('#optionsData').val();
+            var json = {
+                optionsData: val,
+                id: formData.id,
+                score: Number.parseInt(formData.score),
+                type: Number.parseInt(formData.type),
+                title: formData.title,
+                blankContent: formData.blankContent
+            };
+
+            // 发送AJAX请求
+            $.ajax({
+                url: '/api/questions/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(json),
+                success: function(res){
+                    if(res.code === 200) {
+                        layer.msg('保存成功', {icon: 1});
+                        // 刷新题目列表
+                        tableIns.reload()
+                        // 重置表单
+                        $('#questionForm')[0].reset();
+                        $('#singleChoiceArea, #fillBlankArea, #essayArea').hide();
+                        layer.closeAll();
+                    } else {
+                        layer.msg(res.msg || '保存失败', {icon: 2});
+                    }
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

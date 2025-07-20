@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>白名单管理系统</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/layui/css/layui.css" rel="stylesheet">
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+    <!-- 头部区域 -->
+    <div class="layui-header" style="font-weight: bold;">
+        <div class="layui-logo layui-bg-black" style="letter-spacing: 3px;">白名单管理系统</div>
+        <ul class="layui-nav layui-layout-left">
+            <li class="layui-nav-item" lay-unselect lay-header-event="menuChange">
+                <a href="javascript:void(0);" title="收起菜单"><i id="leftEnumIcon" class="layui-icon layui-icon-shrink-right"></i></a>
+            </li>
+            <li class="layui-nav-item layui-hide-xs" lay-unselect lay-header-event="menuRefresh">
+                <a href="javascript:void(0);" title="刷新页面"><i class="layui-icon layui-icon-refresh-3"></i></a>
+            </li>
+        </ul>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item layui-hide-xs" lay-unselect lay-header-event="menuFull">
+                <a href="javascript:void(0);" title="全屏">
+                    <i class="layui-icon layui-icon-screen-full" id="tool-screen-full"></i>
+                </a>
+            </li>
+            <li class="layui-nav-item">
+                <a href="javascript:void(0);">
+                    <input type="hidden" id="userId" th:value="${session.adminAccount.id}" /> <!-- 登录用户ID -->
+                    <span th:text="${session.adminAccount.username}"></span>
+                </a>
+                <dl class="layui-nav-child" style="text-align: center;">
+                    <dd th:if="${session.adminAccount.permissionLevel == 0}" lay-header-event="addOperator"><a href="javascript:void(0);">添加审核员</a></dd>
+                    <dd lay-header-event="logout"><a href="javascript:void(0);">退出登录</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item layui-hide-xs" lay-unselect lay-header-event="menuAbout">
+                <a href="javascript:void(0);" title="更多信息">
+                    <i class="layui-icon layui-icon-more-vertical"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- 左侧导航菜单 -->
+    <div class="layui-side layui-bg-black" style="font-weight: bold;">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域 -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test" style="letter-spacing: 1px;" lay-accordion id="indexSideMenu">
+                <li class="layui-nav-item">
+                    <a href="javascript:void(0);" data-id="1" data-url="/admin/application" data-name="申请管理" lay-aside-event="menuAction">
+                        <cite th:text="申请管理"></cite>
+                    </a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:void(0);" data-id="2" data-url="/admin/answers" data-name="答题记录" lay-aside-event="menuAction">
+                        <cite th:text="答题记录"></cite>
+                    </a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:void(0);" data-id="3" data-url="/admin/questions" data-name="题目管理" lay-aside-event="menuAction">
+                        <cite th:text="题目管理"></cite>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- 内容主体区域 -->
+    <div class="layui-body">
+        <div class="layui-tabs layui-hide-v" id="demoTabs" lay-options="{closable: true, headerMode:'scroll'}" style="display: flex; flex-direction: column; height: 100%;">
+            <ul class="layui-tabs-header" style="flex-shrink: 0;">
+                <li lay-id="0" lay-closable="false">欢迎页面</li>
+            </ul>
+            <div class="layui-tabs-body" style="flex-grow: 1; overflow: auto; padding: 0;">
+                <div class="layui-tabs-item">
+                    <iframe src="/admin/welcome" style="border: none;position: absolute;width: 100%;height: 100%;left: 0;top: 0;right: 0;bottom: 0;margin-top: 40px;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.use(['layer', 'tabs', 'jquery', 'util', 'dropdown', 'form'], function () {
+        let layer = layui.layer;        // 弹出层
+        let tabs = layui.tabs;          // 标签页
+        let $ = layui.jquery;           // jQuery
+        let util = layui.util;          // 工具模块
+        let dropdown = layui.dropdown;  // 下拉菜单
+        let form = layui.form;          // 表单组件
+        let device = layui.device();    // 浏览器信息
+
+        if (device.mobile) {
+            layer('当前设备为移动设备，建议使用电脑浏览');
+        }
+
+        // 页面顶部工具栏点击事件
+        util.event('lay-header-event', {
+            menuChange: function () {   // 边栏伸缩
+                let btn = $('#leftEnumIcon');
+                if (btn.hasClass('layui-icon-shrink-right')) {
+                    btn.removeClass('layui-icon-shrink-right').addClass('layui-icon-spread-left');
+                    $(".layui-side").animate({width: 'toggle'});
+                    $(".layui-body").animate({left: '0px'});
+                } else if (btn.has('layui-icon-spread-left')) {
+                    btn.removeClass('layui-icon-spread-left').addClass('layui-icon-shrink-right');
+                    $(".layui-side").animate({width: 'toggle'});
+                    $(".layui-body").animate({left: '200px'});
+                }
+            },
+            menuRefresh: function () {  // 刷新页面
+                let activeTab = $('#demoTabs .layui-tabs-header li.layui-this');    // 获取当前激活的 tab 标签页
+                console.log(activeTab)
+                if (activeTab.length) {
+                    let tabId = activeTab.attr('lay-id');
+                    // 获取对应的 iframe 元素
+                    let iframe = $('.layui-show iframe');
+                    console.log(iframe)
+                    if (iframe.length) {
+                        iframe[0].contentWindow.location.reload();  // 刷新 iframe 页面
+                    }
+                }
+            },
+            menuAbout: function () {
+                layer.open({
+                    type: 1,
+                    title: '更多信息',
+                    offset: 'r',
+                    anim: 'slideLeft', // 从右往左
+                    area: ['25%', '100%'],
+                    shade: 0.5,
+                    shadeClose: true,
+                    content: '<div style="padding: 20px;">' +
+                        '<p>项目：玩家白名单申请管理系统</p>' +
+                        '<p>@闲趣时坞 2025</p>' +
+                        '</div>'
+                });
+            },
+            menuFull: function () { // 全屏显示
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                    document.getElementById("tool-screen-full").setAttribute("class", "layui-icon layui-icon-screen-restore");
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                        document.getElementById("tool-screen-full").setAttribute("class", "layui-icon layui-icon-screen-full");
+                    }
+                }
+            },
+            addOperator: function() {
+                layer.open({
+                    type: 2,
+                    title: '添加管理',
+                    shadeClose: true,  // 允许点击遮罩关闭
+                    maxmin: true,      // 允许最大化/最小化
+                    area: ['400px', '320px'],  // 响应式尺寸
+                    content: `/admin/add`  // ES6模板字符串语法
+                });
+            },
+            logout: function () { // 退出登录
+                layer.confirm('确定退出登录嘛?', {
+                    btn: ['确定', '取消']
+                }, function () {
+                    $.ajax({
+                        url: '/admin/logout',
+                        type: 'GET',
+                        success: function (res) {
+                            if (res.code === 200) {
+                                layer.msg('退出成功', {icon: 1});
+                                setTimeout(() => {
+                                    window.location = '/admin/login';
+                                }, 1000)
+                            } else {
+                                layer.msg('退出失败', {icon: 2});
+                            }
+                        },
+                        error: function () {
+                            layer.msg('Ajax请求异常', {icon: 0});
+                        }
+                    });
+                }, function () {
+                    layer.msg('退出登录操作已取消');
+                });
+            }
+        });
+
+        // 页面左侧菜单点击事件
+        util.event('lay-aside-event', {
+            menuAction: function (othis) {
+                // 通过 lay-id 判断当前标签页是否存在，通过 DOM 元素的 dataset 属性获取元素的属性值
+                if (tabs.getHeaderItem('demoTabs', 'menu' + othis[0].dataset.id).length) {
+                    // 如果这个标签页存在，就切换到这个标签页
+                    layui.tabs.change('demoTabs', 'menu' + othis[0].dataset.id);
+                } else {
+                    // 如果这个标签页不存在，就添加新标签为这个标签页
+                    tabs.add('demoTabs', {
+                        title: othis[0].dataset.name,
+                        content: '<iframe src="' + othis[0].dataset.url + '" style="border: none;position: absolute;width: 100%;height: 100%;left: 0;top: 0;right: 0;bottom: 0;margin-top: 40px;"></iframe>',
+                        id: 'menu' + othis[0].dataset.id,
+                        done: function (data) {
+                            // 给新标签头添加上下文菜单
+                            dropdown.render($.extend({}, dropdownInst.config, {
+                                elem: data.headerItem // 新标签头元素
+                            }));
+                        }
+                    });
+                }
+            }
+        });
+
+        // 为标签头添加上下文菜单
+        let dropdownInst = dropdown.render({
+            elem: '#demoTabs .layui-tabs-header>li',
+            trigger: 'contextmenu',
+            data: [{
+                title: '关闭当前标签页',
+                action: 'close',
+                mode: 'this',
+            }, {
+                type: '-'
+            }, {
+                title: '关闭其他标签页',
+                action: 'close',
+                mode: 'other'
+            }, {
+                title: '关闭右侧标签页',
+                action: 'close',
+                mode: 'right'
+            }, {
+                title: '关闭所有标签页',
+                action: 'close',
+                mode: 'all'
+            }],
+            click: function (data, othis, event) {
+                let index = this.elem.index(); // 获取活动标签索引
+                if (data.action === 'close') { // 关闭标签操作
+                    if (data.mode === 'this') {
+                        tabs.close('demoTabs', index); // 关闭当前标签
+                    } else {
+                        tabs.closeMult('demoTabs', data.mode, index); // 批量关闭标签
+                    }
+                }
+            }
+        });
+
+
+    });
+</script>
+</body>
+</html>

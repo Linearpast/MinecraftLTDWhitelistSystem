@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎界面</title>
+    <!-- 引入Layui核心样式 -->
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <!-- 自定义白色主题样式 -->
+    <style>
+        body {
+            background-color: #f8f9fa; /* 页面背景（浅灰） */
+            margin: 0;
+            padding: 20px;
+        }
+        .layui-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        /* 统计卡片样式 */
+        .stat-card {
+            background-color: #fff; /* 卡片背景（白） */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 轻微阴影 */
+            padding: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /*  hover 增强阴影 */
+        }
+        .stat-card .layui-icon {
+            font-size: 40px;
+            color: #1E9FFF; /* 图标颜色（Layui主色） */
+            margin-bottom: 20px;
+        }
+        .stat-card .stat-title {
+            font-size: 16px;
+            color: #666; /* 标题颜色（深灰） */
+            margin-bottom: 15px;
+        }
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333; /* 数值颜色（黑） */
+        }
+        /* 下方文本框样式 */
+        .welcome-text {
+            background-color: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 150px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-container">
+    <!-- 顶部统计卡片区域 -->
+    <div class="layui-row">
+        <!-- 已通过白名单玩家数量 -->
+        <div class="layui-col-md4">
+            <div class="stat-card">
+                <i class="layui-icon layui-icon-auz"></i>
+                <div class="stat-title" style="color: green">已通过白名单玩家数量</div>
+                <div class="stat-value" th:text="${passCount}">1,234</div>
+            </div>
+        </div>
+        <!-- 未审核玩家数量 -->
+        <div class="layui-col-md4">
+            <div class="stat-card">
+                <i class="layui-icon layui-icon-user"></i>
+                <div class="stat-title" style="color: #3a3a3a">未审核玩家数量</div>
+                <div class="stat-value" th:text="${unmarkCount}">56</div>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="stat-card">
+                <i class="layui-icon layui-icon-close-fill"></i>
+                <div class="stat-title" style="color: red">拒绝玩家数量</div>
+                <div class="stat-value" th:text="${denyCount}">56</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下方文本框区域 -->
+    <div class="layui-row" style="background-color: white">
+        <div class="layui-col-md-12" style="text-align: center">
+            <span style="text-align: center; font-size: 2rem">欢迎使用闲趣时坞白名单系统</span>
+            <div class="welcome-text" style="text-align: left;border: 1px solid green; border-radius: 4px; float: none;display: flex;justify-content: center;">
+                <ul class="layui-list" style="padding: 10%">
+                    <li><i class="layui-icon layui-icon-ok"></i> <span th:text="${'验证邮箱：' + email}"></span></li>
+                    <li><i class="layui-icon layui-icon-ok"></i> 前端框架：Layui</li>
+                    <li><i class="layui-icon layui-icon-ok"></i> 模板引擎：Thymeleaf</li>
+                    <li><i class="layui-icon layui-icon-ok"></i> 后端框架：Spring Boot</li>
+                    <li><i class="layui-icon layui-icon-ok"></i> 持久层：Spring Data JPA</li>
+                    <li><i class="layui-icon layui-icon-ok"></i> 数据库：MySQL</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 引入Layui核心JS（可选，若需交互功能） -->
+<script src="/layui/layui.js"></script>
+</body>
+</html>

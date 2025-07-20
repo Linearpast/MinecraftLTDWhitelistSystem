@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>添加白名单审核员</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="content-container" style="padding: 20px">
+            <form th:action="@{/api/operators/save}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="roleName" id="roleName" value="白名单管理员">
+                <input type="hidden" name="permissionLevel" id="permissionLevel" value="1">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">管理昵称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="nickname" id="nickname" required lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">管理账号</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="username" id="username" required lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">管理密码</label>
+                    <div class="layui-input-block">
+                        <input type="password" name="password" id="password" required lay-verify="required" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="formSubmit">提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+</div>
+<script src="/js/jquery.3.6.0.js"></script>
+<script src="/layui/layui.js"></script>
+<script th:inline="none">
+    $(function() {
+        // 1. 拦截表单提交
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            submitFormAsync(this);
+        });
+
+        // 2. 异步提交函数
+        function submitFormAsync(form) {
+            var json = {
+                id: null,
+                permissionLevel: $('#permissionLevel').val(),
+                roleName: $('#roleName').val(),
+                username: $('#username').val(),
+                password: $('#password').val(),
+                nickname: $('#nickname').val()
+            }
+
+            $.ajax({
+                url: form.action,
+                type: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify(json),
+                success: function(res) {
+                    if (res.code === 200) {
+                        parent.layer.msg('保存成功', {icon:1}, () => {
+                            const index = parent.layer.getFrameIndex(window.name);
+                            parent.layer.close(index);
+                        });
+                    } else {
+                        parent.layer.alert(res.msg, {icon:2});
+                    }
+                },
+                error: function() {
+                    alert('请求异常，请重试');
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
