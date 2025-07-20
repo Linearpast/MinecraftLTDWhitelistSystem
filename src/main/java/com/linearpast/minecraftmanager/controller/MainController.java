@@ -72,7 +72,7 @@ public class MainController {
 			String qq = (String) session.getAttribute("qq");
 			String base64 = HttpApiUtils.qqAvatarQuery(qq);
 			if(base64 != null) model.addAttribute("avatar", base64);
-			return "/player/apply";
+			return "player/apply";
 		}
 		@GetMapping
 		public String index(){
@@ -81,7 +81,7 @@ public class MainController {
 		@GetMapping("/login")
 		public String adminLoginIndex(@RequestParam(name = "error", required = false) String error, Model model){
 			model.addAttribute("error", error);
-			return "/player/login";
+			return "player/login";
 		}
 		@GetMapping("/logout")
 		public String logout(HttpSession session){
@@ -90,7 +90,7 @@ public class MainController {
 		}
 		@GetMapping("/emailSuccess")
 		public String emailSuccess(){
-			return "/player/email-success";
+			return "player/email-success";
 		}
 	}
 
@@ -127,17 +127,17 @@ public class MainController {
 			model.addAttribute("passCount", passCount);
 			model.addAttribute("unmarkCount", unmarkCount);
 			model.addAttribute("denyCount", denyCount);
-			return "/admin/welcome-page";
+			return "admin/welcome-page";
 		}
 
 		@GetMapping("/home")
 		public String home(){
-			return "/admin/index";
+			return "admin/index";
 		}
 
 		@GetMapping("/add")
 		public String add(){
-			return "/admin/add-operator";
+			return "admin/add-operator";
 		}
 
 		@GetMapping
@@ -148,7 +148,7 @@ public class MainController {
 		@GetMapping("/login")
 		public String adminLoginIndex(@RequestParam(name = "error", required = false) String error, Model model){
 			model.addAttribute("error", error);
-			return "/admin/login";
+			return "admin/login";
 		}
 		@ResponseBody
 		@GetMapping("/logout")
@@ -159,17 +159,17 @@ public class MainController {
 
 		@GetMapping("/application")
 		public String application(){
-			return "/admin/apply-manager";
+			return "admin/apply-manager";
 		}
 
 		@GetMapping("/questions")
 		public String question(){
-			return "/admin/question-manager";
+			return "admin/question-manager";
 		}
 
 		@GetMapping("/answers")
 		public String answers(){
-			return "/admin/answer-manager";
+			return "admin/answer-manager";
 		}
 	}
 
