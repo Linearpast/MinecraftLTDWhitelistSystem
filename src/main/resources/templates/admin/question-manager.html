@@ -35,6 +35,9 @@
         <div class="layui-card-header">已有题目</div>
         <div class="layui-card-body">
             <div class="operation-container" style="margin-bottom: 10px">
+                <button class="layui-btn layui-btn-normal" id="refreshPage">
+                    <i class="layui-icon layui-icon-refresh"></i>重载数据
+                </button>
                 <button class="layui-btn" id="addBtn">
                     <i class="layui-icon layui-icon-add-1"></i>添加题目
                 </button>
@@ -411,6 +414,7 @@
                 layer.msg('请选择要删除的问题');
                 return;
             }
+            var loadIndex = layer.msg('处理中...', { icon: 16, shade: 0.3, time: 0 });
 
             layer.confirm('确定要删除选中的问题吗？', function (index) {
                 var ids = data.map(function (item) {
@@ -421,6 +425,9 @@
                     type: 'delete',
                     contentType: 'application/json',
                     data: JSON.stringify(ids),
+                    complete: function () {
+                        layer.close(loadIndex);
+                    },
                     success: function (res) {
                         if (res.code === 200) {
                             layer.msg('删除成功');
@@ -436,6 +443,12 @@
                 layer.close(index);
             });
         });
+
+        $('#refreshPage').click(function () {
+            tableIns.reload({
+                page: {curr: tableIns.config.page.curr}
+            });
+        })
 
         // 题目类型切换监听
         form.on('select(questionType)', function(data){

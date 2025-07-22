@@ -1,10 +1,10 @@
 package com.linearpast.minecraftmanager.service.impl;
 
-import com.linearpast.minecraftmanager.utils.ConfigLoader;
 import com.linearpast.minecraftmanager.entity.ConfirmationEmail;
 import com.linearpast.minecraftmanager.entity.Players;
 import com.linearpast.minecraftmanager.repository.ConfirmationEmailRepository;
 import com.linearpast.minecraftmanager.service.EmailService;
+import com.linearpast.minecraftmanager.utils.ConfigLoader;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +45,6 @@ public class EmailServiceImpl implements EmailService {
 	}
 
 	private String buildHtmlContent(String mcName, String token, String host) {
-//		String baseUrl = "http://whitelist.r3944realms.top/api/confirm";  // 后端确认接口地址
-
 		String baseUrl = host + "/api/confirm";
 		String confirmUrl = baseUrl + "?token=" + token;  // 带token的确认链接
 

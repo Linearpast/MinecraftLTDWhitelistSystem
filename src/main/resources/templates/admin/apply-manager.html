@@ -41,19 +41,19 @@
                         <div class="layui-inline">
                             <label class="layui-form-label">玩家名称</label>
                             <div class="layui-input-inline">
-                                <input type="text" name="playerName" placeholder="请输入玩家名称" class="layui-input">
+                                <input type="text" id="searchPlayerName" name="playerName" placeholder="请输入玩家名称" class="layui-input">
                             </div>
                         </div>
                         <div class="layui-inline">
                             <label class="layui-form-label">qq号</label>
                             <div class="layui-input-inline">
-                                <input type="text" name="qq" placeholder="请输入qq号" class="layui-input">
+                                <input type="text" id="searchQQ" name="qq" placeholder="请输入qq号" class="layui-input">
                             </div>
                         </div>
                         <div class="layui-inline">
                             <label class="layui-form-label">状态</label>
                             <div class="layui-input-inline">
-                                <select name="status">
+                                <select name="status" id="searchStatus">
                                     <option value="">全部</option>
                                     <option value="1">已通过</option>
                                     <option value="2">未通过</option>
@@ -64,11 +64,11 @@
                         <div class="layui-inline">
                             <label class="layui-form-label">答题分数</label>
                             <div class="layui-input-inline" style="width: 100px;">
-                                <input type="number" name="minValue" placeholder="最小值" class="layui-input">
+                                <input type="number" id="searchMinValue" name="minValue" placeholder="最小值" class="layui-input">
                             </div>
                             <div class="layui-form-mid">-</div>
                             <div class="layui-input-inline" style="width: 100px;">
-                                <input type="number" name="maxValue" placeholder="最大值" class="layui-input">
+                                <input type="number" id="searchMaxValue" name="maxValue" placeholder="最大值" class="layui-input">
                             </div>
                         </div>
                         <div class="layui-inline">
@@ -85,6 +85,9 @@
 
             <!-- 操作按钮区域 -->
             <div class="operation-container" style="margin-bottom: 10px">
+                <button class="layui-btn layui-btn-normal" id="refreshPage">
+                    <i class="layui-icon layui-icon-refresh"></i>重载数据
+                </button>
                 <button class="layui-btn" id="addBtn">
                     <i class="layui-icon layui-icon-add-1"></i>添加
                 </button>
@@ -212,9 +215,15 @@
         </div>
     </div>
     <div class="layui-form-item">
-        <label class="layui-form-label">处理人</label>
+        <label class="layui-form-label">处理人用户名</label>
         <div class="layui-input-block">
-            <input type="text" id="detailOperator" readonly class="layui-input">
+            <input type="text" id="detailOperatorUsername" readonly class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">处理人昵称</label>
+        <div class="layui-input-block">
+            <input type="text" id="detailOperatorNickname" readonly class="layui-input">
         </div>
     </div>
     <div class="layui-form-item">
@@ -255,7 +264,7 @@
 </script>
 
 <script type="text/html" id="activeTpl">
-    {{# if(d.confirmationEmail?.active) { }}
+    {{# if(d.emailActive) { }}
     <span class="status-label status-approved">已激活</span>
     {{# } else { }}
     <span class="status-label status-rejected">未激活</span>
@@ -370,15 +379,15 @@
                 {field: 'id', title: 'ID', width: 60, sort: true},
                 {field: 'playerName', title: '玩家名称', width: 140, sort: true},
                 {field: 'uuid', title: '玩家uuid', width: 300},
-                {field: 'region.fullName', title: '玩家住址', width: 180, templet: function (d) {
-                        return (d.region?.fullName === null ? '无数据' : d.region?.fullName);
+                {field: 'regionFullName', title: '玩家住址', width: 180, templet: function (d) {
+                        return (d.regionFullName == null ? '无数据' : d.regionFullName);
                     }},
                 {field: 'qq', title: 'qq号', width: 130, sort: true},
                 {field: 'totalScore', title: '分数', width: 80, sort: true},
                 {field: 'createTime', title: '申请时间', width: 160, sort: true, templet: function(d){
                         return (d.createTime === null ? '无数据' : (new Date(d.createTime).toLocaleString()))
                     }},
-                {field: 'confirmationEmail.active', title: '激活', width: 120, sort: true, templet: '#activeTpl'},
+                {field: 'emailActive', title: '激活', width: 120, sort: true, templet: '#activeTpl'},
                 {field: 'status', title: '状态', width: 120, sort: true, templet: '#statusTpl'},
                 {fixed: 'right', title: '操作', width: 280, align: 'center', toolbar: '#tableOperation'}
             ]],
@@ -445,6 +454,7 @@
                 layer.msg('请选择要删除的玩家');
                 return;
             }
+            var loadIndex = layer.msg('处理中...', { icon: 16, shade: 0.3, time: 0 });
 
             layer.confirm('确定要删除选中的玩家吗？', function (index) {
                 var ids = data.map(function (item) {
@@ -455,6 +465,9 @@
                     type: 'delete',
                     contentType: 'application/json',
                     data: JSON.stringify(ids),
+                    complete: function () {
+                        layer.close(loadIndex);
+                    },
                     success: function (res) {
                         if (res.code === 200) {
                             layer.msg('删除成功');
@@ -471,6 +484,21 @@
             });
         });
 
+        $('#refreshPage').click(function () {
+            var searchParams = {
+                playerName: $('#searchPlayerName').val() || null,
+                qq: $('#searchQQ').val() || null,
+                uuid: null,
+                status: $('#searchStatus').val() || null,
+                minValue: $('#searchMinValue').val() || null,
+                maxValue: $('#searchMaxValue').val() || null
+            };
+            tableIns.reload({
+                where: searchParams,
+                page: {curr: tableIns.config.page.curr}
+            });
+        })
+
         // 表格工具栏事件
         table.on('tool(playersTable)', function (obj) {
             var data = obj.data;
@@ -480,9 +508,10 @@
                 $('#detailPlayerName').val(data.playerName);
                 $('#detailUuid').val(data.uuid);
                 $('#detailQQ').val(data.qq);
-                $('#detailRegion').val(data.region.fullName);
+                $('#detailRegion').val(data.regionFullName);
                 $('#detailScore').val(data.totalScore);
-                $('#detailOperator').val(data.operators?.username);
+                $('#detailOperatorUsername').val(data.operatorUsername);
+                $('#detailOperatorNickname').val(data.operatorNickname);
                 $('#detailCreateTime').val(data.createTime?.replace('T'," "));
                 $('#detailDescription').val(data.description);
                 layer.open({
@@ -498,11 +527,11 @@
                 const formattedTime = data.createTime?.slice(0, 19);
                 form.val('playerForm', {
                     "id": data.id,
-                    "pid": data.operators.id,
+                    "pid": data.operatorId,
                     "playerName": data.playerName,
                     "uuid": data.uuid,
                     "qq": data.qq,
-                    "code": data.region.code,
+                    "code": data.regionCode,
                     "description": data.description,
                     "totalScore": data.totalScore,
                     "createTime": data.createTime,

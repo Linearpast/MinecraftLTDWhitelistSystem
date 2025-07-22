@@ -1,0 +1,42 @@
+server:
+  port: 8484
+  servlet:
+    session:
+      timeout: 8h
+
+spring:
+  application:
+    name: MinecraftManager
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/minecraft_manager_ltd?useSSL=false
+    username: root
+    password: 3235566389lzh
+#    url: jdbc:mysql://127.0.0.1:3308/minecraft_manager_ltd?useSSL=false
+#    username: leisuretimedock
+#    password: ltd20250706
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+    password: NXSd5J7nfJsAbLJt
+    username: leisuretimedock@163.com
+    port: 465
+    host: smtp.163.com
+
+# ========== self config ==========
+minecraft:
+  rcon:
+    host: 192.168.2.127
+    port: 25575
+    password: 123456

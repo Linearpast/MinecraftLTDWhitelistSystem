@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.linearpast.minecraftmanager.entity.*;
 import com.linearpast.minecraftmanager.entity.dto.*;
 import com.linearpast.minecraftmanager.entity.embeddable.PlayerAnswersId;
+import com.linearpast.minecraftmanager.entity.view.PlayerInfoView;
 import com.linearpast.minecraftmanager.service.PlayerAnswersService;
 import com.linearpast.minecraftmanager.service.PlayersService;
 import com.linearpast.minecraftmanager.service.QuestionsService;
@@ -14,7 +15,6 @@ import com.linearpast.minecraftmanager.service.RegionService;
 import com.linearpast.minecraftmanager.service.impl.EmailServiceImpl;
 import com.linearpast.minecraftmanager.utils.HttpApiUtils;
 import com.linearpast.minecraftmanager.utils.Result;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +53,7 @@ public class PlayerController {
 			@RequestParam(defaultValue = "1") Integer page,
 			@RequestParam(defaultValue = "10") Integer size
 	){
-		Page<Players> playerScores = playersService.getPlayers(
+		Page<PlayerInfoView> playerScores = playersService.getPlayers(
 				playerName, qq, uuid, status, minValue, maxValue, PageRequest.of(page - 1, size)
 		);
 		return Result.successPage(playerScores.getContent(), playerScores.getTotalElements());
@@ -61,8 +61,7 @@ public class PlayerController {
 
 	@DeleteMapping("/delete/{id}")
 	public Result<?> delete(@PathVariable Integer id){
-		playersService.deletePlayer(id);
-		return Result.success();
+		return playersService.deletePlayer(id) ? Result.success() : Result.error("删除失败，不存在玩家或Rcon连接错误");
 	}
 
 	@PostMapping("/changeStatus")
@@ -74,15 +73,16 @@ public class PlayerController {
 
 	@DeleteMapping("/batchDelete")
 	public Result<?> batchDelete(@RequestBody List<Integer> ids){
-		playersService.deletePlayers(ids);
-		return Result.success();
+		int code = playersService.deletePlayers(ids);
+		return code > 0 ? Result.success().msg("操作成功：" + code + "/" + ids.size() + "条数据") :
+				Result.error("删除失败，不存在玩家或Rcon连接错误");
 	}
 
 	@PostMapping("/batchChangeStatus")
 	public Result<?> batchPass(@RequestBody BatchStatusUpdateDTO dto, HttpSession session){
 		Operators operators = (Operators) session.getAttribute("adminAccount");
 		int code = playersService.updatePlayersStatus(dto.getIds(), dto.getStatus(), operators);
-		return code < 1 ? Result.error("操作失败") : Result.success();
+		return code < 1 ? Result.error("操作失败") : Result.success().msg("操作成功：" + code + "/" + dto.getIds().size() + "条数据");
 	}
 
 	@PostMapping("/save")
@@ -114,7 +114,6 @@ public class PlayerController {
 				newPlayer.setCreateTime(LocalDateTime.parse(players.getCreateTime(),
 						DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 				);
-				newPlayer.setTotalScore(players.getTotalScore());
 				newPlayer.setRegion(region);
 				newPlayer.setOperators(account);
 				newPlayer.setConfirmationEmail(confirmationEmail);
@@ -145,7 +144,6 @@ public class PlayerController {
 						DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 				);
 				player.setDescription(players.getDescription());
-				player.setTotalScore(players.getTotalScore());
 				player.setOperators(account);
 				Players result = playersService.savePlayer(player);
 				if(result == null) return Result.error("服务器错误");
@@ -230,7 +228,6 @@ public class PlayerController {
 				player.setRegion(new Region(){{setCode(code);}});
 				player.setCreateTime(LocalDateTime.now());
 				player.setStatus((byte)2);
-				player.setTotalScore(0);
 				Players playerIsApply = playersService.getPlayerIsApply(playerName, qq);
 				Players players;
 				if(playerIsApply == null) players = playersService.savePlayer(player);

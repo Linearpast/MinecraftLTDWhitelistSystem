@@ -2,7 +2,6 @@ package com.linearpast.minecraftmanager.utils;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mysql.cj.util.Base64Decoder;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 

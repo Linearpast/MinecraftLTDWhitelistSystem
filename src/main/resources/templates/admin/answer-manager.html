@@ -54,19 +54,19 @@
                         <div class="layui-inline">
                             <label class="layui-form-label">玩家名称</label>
                             <div class="layui-input-inline">
-                                <input type="text" name="playerName" placeholder="请输入玩家名称" class="layui-input">
+                                <input type="text" id="searchPlayerName" name="playerName" placeholder="请输入玩家名称" class="layui-input">
                             </div>
                         </div>
                         <div class="layui-inline">
                             <label class="layui-form-label">qq号</label>
                             <div class="layui-input-inline">
-                                <input type="text" name="qq" placeholder="请输入qq号" class="layui-input">
+                                <input type="text" id="searchQQ" name="qq" placeholder="请输入qq号" class="layui-input">
                             </div>
                         </div>
                         <div class="layui-inline">
                             <label class="layui-form-label">状态</label>
                             <div class="layui-input-inline">
-                                <select name="status">
+                                <select name="status" id="searchStatus">
                                     <option value="">全部</option>
                                     <option value="1">已通过</option>
                                     <option value="2">未通过</option>
@@ -77,11 +77,11 @@
                         <div class="layui-inline">
                             <label class="layui-form-label">答题分数</label>
                             <div class="layui-input-inline" style="width: 100px;">
-                                <input type="number" name="minValue" placeholder="最小值" class="layui-input">
+                                <input type="number" id="searchMinValue" name="minValue" placeholder="最小值" class="layui-input">
                             </div>
                             <div class="layui-form-mid">-</div>
                             <div class="layui-input-inline" style="width: 100px;">
-                                <input type="number" name="maxValue" placeholder="最大值" class="layui-input">
+                                <input type="number" id="searchMaxValue" name="maxValue" placeholder="最大值" class="layui-input">
                             </div>
                         </div>
                         <div class="layui-inline">
@@ -98,6 +98,9 @@
 
             <!-- 操作按钮区域 -->
             <div class="operation-container" style="margin-bottom: 10px">
+                <button class="layui-btn layui-btn-normal" id="refreshPage">
+                    <i class="layui-icon layui-icon-refresh"></i>重载数据
+                </button>
                 <button class="layui-btn" id="batchPassBtn">
                     <i class="layui-icon layui-icon-success"></i>批量通过
                 </button>
@@ -374,6 +377,7 @@
                 layer.msg('请选择玩家');
                 return;
             }
+            var loadIndex = layer.msg('处理中...', { icon: 16, shade: 0.3, time: 0 });
 
             layer.confirm('确定要通过选中的玩家的申请吗？', function (index) {
                 var ids = data.map(function (item) {
@@ -384,9 +388,12 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ids:ids, status:1}),
+                    complete: function () {
+                        layer.close(loadIndex);
+                    },
                     success: function (res) {
                         if (res.code === 200) {
-                            layer.msg('操作成功');
+                            layer.msg(res.msg);
                             tableIns.reload();
                         } else {
                             layer.msg(res.msg || '操作失败');
@@ -407,6 +414,7 @@
                 layer.msg('请选择玩家');
                 return;
             }
+            var loadIndex = layer.msg('处理中...', { icon: 16, shade: 0.3, time: 0 });
 
             layer.confirm('确定要拒绝选中的玩家的申请吗？', function (index) {
                 var ids = data.map(function (item) {
@@ -417,9 +425,12 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ids:ids, status:3}),
+                    complete: function () {
+                        layer.close(loadIndex);
+                    },
                     success: function (res) {
                         if (res.code === 200) {
-                            layer.msg('操作成功');
+                            layer.msg(res.msg);
                             tableIns.reload();
                         } else {
                             layer.msg(res.msg || '操作失败');
@@ -432,6 +443,21 @@
                 layer.close(index);
             });
         });
+
+        $('#refreshPage').click(function () {
+            var searchParams = {
+                playerName: $('#searchPlayerName').val() || null,
+                qq: $('#searchQQ').val() || null,
+                uuid: null,
+                status: $('#searchStatus').val() || null,
+                minValue: $('#searchMinValue').val() || null,
+                maxValue: $('#searchMaxValue').val() || null
+            };
+            tableIns.reload({
+                where: searchParams,
+                page: {curr: tableIns.config.page.curr}
+            });
+        })
 
         // 表格工具栏事件
         table.on('tool(playersTable)', function (obj) {

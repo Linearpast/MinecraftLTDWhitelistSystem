@@ -1,6 +1,5 @@
 package com.linearpast.minecraftmanager.repository;
 
-import com.linearpast.minecraftmanager.entity.Players;
 import com.linearpast.minecraftmanager.entity.Region;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -9,8 +8,9 @@ import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.util.StringUtils;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface RegionRepository extends JpaRepository<Region, Long>, JpaSpecificationExecutor<Region> {
 
 	class RegionSpecifications {
