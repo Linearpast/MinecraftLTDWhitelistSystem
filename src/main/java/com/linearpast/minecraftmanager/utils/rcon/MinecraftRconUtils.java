@@ -86,11 +86,13 @@ public class MinecraftRconUtils {
 			this.minecraftClient = submit.get(timeout, TimeUnit.SECONDS);
 			this.minecraftRcon = new MinecraftRcon(this.minecraftClient);
 			this.isConnected = true;
-			this.connectionLatch.countDown();
+			if(this.connectionLatch != null){
+				this.connectionLatch.countDown();
+			}
 		} catch (Exception var2) {
 			Exception e = var2;
 			disconnect();
-			if (Optional.ofNullable(this.connectionLatch).map(CountDownLatch::getCount).orElse(0L) > 0){
+			if (this.minecraftClient != null){
 				this.connectionLatch.countDown();
 			}
 			log.error("Connection fail to {}", this.rconDetails.getHostname(), var2);
