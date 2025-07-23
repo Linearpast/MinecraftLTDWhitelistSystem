@@ -2,7 +2,7 @@ package com.linearpast.minecraftmanager.service.impl;
 
 import com.linearpast.minecraftmanager.entity.Operators;
 import com.linearpast.minecraftmanager.repository.OperatorsRepository;
-import com.linearpast.minecraftmanager.service.OperatorsService;
+import com.linearpast.minecraftmanager.service.inter.OperatorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

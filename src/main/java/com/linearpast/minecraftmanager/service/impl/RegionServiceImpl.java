@@ -2,7 +2,7 @@ package com.linearpast.minecraftmanager.service.impl;
 
 import com.linearpast.minecraftmanager.entity.Region;
 import com.linearpast.minecraftmanager.repository.RegionRepository;
-import com.linearpast.minecraftmanager.service.RegionService;
+import com.linearpast.minecraftmanager.service.inter.RegionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;

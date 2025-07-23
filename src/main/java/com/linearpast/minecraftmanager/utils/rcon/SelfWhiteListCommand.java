@@ -13,10 +13,6 @@ import java.util.Objects;
 
 @Getter
 public class SelfWhiteListCommand extends BaseTargetedCommand {
-	@Component
-	public static class WhiteListCommand{
-
-	}
 	private final WhiteListModes whiteListMode;
 
 	public SelfWhiteListCommand(Target target, WhiteListModes whiteListMode) {

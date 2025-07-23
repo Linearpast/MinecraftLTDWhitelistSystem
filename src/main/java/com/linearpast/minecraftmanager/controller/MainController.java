@@ -2,9 +2,9 @@ package com.linearpast.minecraftmanager.controller;
 
 import com.linearpast.minecraftmanager.entity.Operators;
 import com.linearpast.minecraftmanager.entity.Players;
-import com.linearpast.minecraftmanager.service.OperatorsService;
-import com.linearpast.minecraftmanager.service.PlayerAnswersService;
-import com.linearpast.minecraftmanager.service.PlayersService;
+import com.linearpast.minecraftmanager.service.inter.OperatorsService;
+import com.linearpast.minecraftmanager.service.inter.PlayerAnswersService;
+import com.linearpast.minecraftmanager.service.inter.PlayersService;
 import com.linearpast.minecraftmanager.service.impl.EmailServiceImpl;
 import com.linearpast.minecraftmanager.utils.Result;
 import com.linearpast.minecraftmanager.utils.config.ConfigLoader;

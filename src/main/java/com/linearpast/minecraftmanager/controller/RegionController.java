@@ -2,7 +2,7 @@ package com.linearpast.minecraftmanager.controller;
 
 import com.linearpast.minecraftmanager.entity.Region;
 import com.linearpast.minecraftmanager.entity.dto.RegionFindDTO;
-import com.linearpast.minecraftmanager.service.RegionService;
+import com.linearpast.minecraftmanager.service.inter.RegionService;
 import com.linearpast.minecraftmanager.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;

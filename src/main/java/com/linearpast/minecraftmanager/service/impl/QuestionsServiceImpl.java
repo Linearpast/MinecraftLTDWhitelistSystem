@@ -2,7 +2,7 @@ package com.linearpast.minecraftmanager.service.impl;
 
 import com.linearpast.minecraftmanager.entity.Questions;
 import com.linearpast.minecraftmanager.repository.QuestionsRepository;
-import com.linearpast.minecraftmanager.service.QuestionsService;
+import com.linearpast.minecraftmanager.service.inter.QuestionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

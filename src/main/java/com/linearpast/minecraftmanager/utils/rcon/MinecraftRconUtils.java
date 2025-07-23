@@ -1,8 +1,11 @@
 package com.linearpast.minecraftmanager.utils.rcon;
 
+import com.linearpast.minecraftmanager.utils.config.SelfConfig;
 import io.graversen.minecraft.rcon.IMinecraftClient;
 import io.graversen.minecraft.rcon.MinecraftClient;
 import io.graversen.minecraft.rcon.MinecraftRcon;
+
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -12,8 +15,8 @@ import io.graversen.minecraft.rcon.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MinecraftRconService {
-	private static final Logger log = LoggerFactory.getLogger(MinecraftRconService.class);
+public class MinecraftRconUtils {
+	private static final Logger log = LoggerFactory.getLogger(MinecraftRconUtils.class);
 	private final ConnectTask task;
 	private final RconDetails rconDetails;
 	private final ScheduledExecutorService executorService;
@@ -22,8 +25,7 @@ public class MinecraftRconService {
 	private volatile boolean isConnected;
 	private volatile CountDownLatch connectionLatch;
 
-
-	public MinecraftRconService(RconDetails rconDetails, ConnectOptions connectOptions) {
+	public MinecraftRconUtils(RconDetails rconDetails, ConnectOptions connectOptions) {
 		this.rconDetails = rconDetails;
 		this.executorService = Executors.newScheduledThreadPool(2);
 		this.task = new ConnectTask(connectOptions, rconDetails);
@@ -48,10 +50,23 @@ public class MinecraftRconService {
 		if(minecraftClient == null) return false;
 		if(minecraftRcon == null) return false;
 		try {
-			return minecraftClient.isConnected(timeout);
+			return rconTest(minecraftClient, timeout);
 		}catch(Exception e) {
 			return false;
 		}
+	}
+
+	private boolean rconTest(IMinecraftClient minecraftClient, Duration timeout){
+		try {
+			minecraftClient.sendRawSilently(SelfConfig.testCommand).get(timeout.toSeconds(), TimeUnit.SECONDS);
+			return true;
+		} catch (ExecutionException | TimeoutException | InterruptedException var3) {
+			log.error("Lost connection to {}", this.rconDetails.getHostname());
+			try {minecraftClient.close();
+			} catch (IOException ignored) {}
+			return false;
+		}
+
 	}
 
 	public Optional<MinecraftRcon> minecraftRcon() {
@@ -63,8 +78,10 @@ public class MinecraftRconService {
 	}
 	public void doConnect(int timeout) {
 		try {
-			this.connectionLatch.await(timeout, TimeUnit.SECONDS);
-			this.connectionLatch = new CountDownLatch(1);
+			if(this.connectionLatch != null){
+				this.connectionLatch.await(timeout, TimeUnit.SECONDS);
+				this.connectionLatch = new CountDownLatch(1);
+			}
 			Future<MinecraftClient> submit = this.executorService.submit(task);
 			this.minecraftClient = submit.get(timeout, TimeUnit.SECONDS);
 			this.minecraftRcon = new MinecraftRcon(this.minecraftClient);

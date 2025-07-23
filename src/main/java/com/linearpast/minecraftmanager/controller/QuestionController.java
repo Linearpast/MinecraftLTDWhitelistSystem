@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.linearpast.minecraftmanager.entity.Questions;
 import com.linearpast.minecraftmanager.entity.dto.QuestionSaveDTO;
-import com.linearpast.minecraftmanager.service.QuestionsService;
+import com.linearpast.minecraftmanager.service.inter.QuestionsService;
 import com.linearpast.minecraftmanager.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

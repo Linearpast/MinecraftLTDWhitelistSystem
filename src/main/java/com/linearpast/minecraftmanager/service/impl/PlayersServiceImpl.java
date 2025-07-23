@@ -5,19 +5,22 @@ import com.linearpast.minecraftmanager.entity.Players;
 import com.linearpast.minecraftmanager.entity.view.PlayerInfoView;
 import com.linearpast.minecraftmanager.repository.PlayersRepository;
 import com.linearpast.minecraftmanager.repository.view.PlayerInfoViewRepository;
-import com.linearpast.minecraftmanager.service.PlayersService;
+import com.linearpast.minecraftmanager.service.inter.PlayersService;
 import com.linearpast.minecraftmanager.utils.config.ConfigLoader;
 import com.linearpast.minecraftmanager.utils.config.SelfConfig;
-import com.linearpast.minecraftmanager.utils.rcon.MinecraftRconService;
+import com.linearpast.minecraftmanager.utils.rcon.MinecraftRconUtils;
 import com.linearpast.minecraftmanager.utils.rcon.SelfWhiteListCommand;
 import io.graversen.minecraft.rcon.MinecraftRcon;
 import io.graversen.minecraft.rcon.RconResponse;
+import io.graversen.minecraft.rcon.service.ConnectOptions;
+import io.graversen.minecraft.rcon.service.RconDetails;
 import io.graversen.minecraft.rcon.util.Target;
 import io.graversen.minecraft.rcon.util.WhiteListModes;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,6 +28,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +41,7 @@ public class PlayersServiceImpl implements PlayersService {
 	@Autowired
 	private PlayerInfoViewRepository playerInfoViewRepository;
 	@Autowired
-	private MinecraftRconService rconService;
+	private MinecraftRconUtils rconService;
 	@Autowired
 	private JavaMailSenderImpl mailSender;
 	@Autowired
@@ -203,7 +207,7 @@ public class PlayersServiceImpl implements PlayersService {
 	}
 
 	private void sendDealEmail(String qq, Byte status, String playerName, boolean delete) throws MessagingException {
-		if(!SelfConfig.emailEnable) return;
+		if(!selfConfig.emailEnable) return;
 		String statusText = status == 1 ? "通过" : "拒绝";
 		if(delete) statusText = "重置";
 		String mainColor = status == 1 ? "#4CAF50" : "#F44336"; // 通过为绿色，拒绝为红色

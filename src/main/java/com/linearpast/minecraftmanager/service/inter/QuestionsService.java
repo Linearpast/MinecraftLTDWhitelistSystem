@@ -1,4 +1,4 @@
-package com.linearpast.minecraftmanager.service;
+package com.linearpast.minecraftmanager.service.inter;
 
 import com.linearpast.minecraftmanager.entity.Questions;
 import org.springframework.data.domain.Page;

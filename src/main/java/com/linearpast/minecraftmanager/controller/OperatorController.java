@@ -1,7 +1,7 @@
 package com.linearpast.minecraftmanager.controller;
 
 import com.linearpast.minecraftmanager.entity.Operators;
-import com.linearpast.minecraftmanager.service.OperatorsService;
+import com.linearpast.minecraftmanager.service.inter.OperatorsService;
 import com.linearpast.minecraftmanager.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;

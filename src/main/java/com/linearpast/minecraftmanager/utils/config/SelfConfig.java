@@ -1,39 +1,39 @@
 package com.linearpast.minecraftmanager.utils.config;
 
-import com.linearpast.minecraftmanager.utils.rcon.MinecraftRconService;
-import io.graversen.minecraft.rcon.service.ConnectOptions;
-import io.graversen.minecraft.rcon.service.RconDetails;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-
 @Component
+@Getter
 public class SelfConfig {
+
+	public static String command;
+	public static String testCommand;
+
 	//rcon
 	@Value("${minecraft.rcon.host}")
-	String host;
+	public String host;
 
 	@Value("${minecraft.rcon.port}")
-	int port;
+	public int port;
 
 	@Value("${minecraft.rcon.password}")
-	String password;
-
-	@Value("${minecraft.rcon.wlcmd}")
-	public static String command;
+	public String password;
 
 	@Value("${minecraft.rcon.heart-time}")
-	long heartTime;
+	public long heartTime;
 
 	@Value("${email.enable}")
-	public static boolean emailEnable;
+	public boolean emailEnable;
 
-	@Bean
-	public MinecraftRconService rconService() {
-		RconDetails details = new RconDetails(host, port, password);
-		ConnectOptions connectOptions = new ConnectOptions(3, Duration.ofSeconds(3L), Duration.ofSeconds(heartTime));
-		return new MinecraftRconService(details, connectOptions);
+	@Value("${minecraft.rcon.wlcmd}")
+	public void whiteListCommand(String command) {
+		SelfConfig.command = command;
+	};
+
+	@Value("${minecraft.rcon.test-cmd}")
+	public void testCommand(String command) {
+		SelfConfig.testCommand = command;
 	}
 }

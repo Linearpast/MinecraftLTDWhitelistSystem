@@ -3,7 +3,7 @@ package com.linearpast.minecraftmanager.service.impl;
 import com.linearpast.minecraftmanager.entity.ConfirmationEmail;
 import com.linearpast.minecraftmanager.entity.Players;
 import com.linearpast.minecraftmanager.repository.ConfirmationEmailRepository;
-import com.linearpast.minecraftmanager.service.EmailService;
+import com.linearpast.minecraftmanager.service.inter.EmailService;
 import com.linearpast.minecraftmanager.utils.config.ConfigLoader;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

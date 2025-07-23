@@ -3,7 +3,7 @@ package com.linearpast.minecraftmanager.service.impl;
 import com.linearpast.minecraftmanager.entity.PlayerAnswers;
 import com.linearpast.minecraftmanager.entity.Players;
 import com.linearpast.minecraftmanager.repository.PlayerAnswersRepository;
-import com.linearpast.minecraftmanager.service.PlayerAnswersService;
+import com.linearpast.minecraftmanager.service.inter.PlayerAnswersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

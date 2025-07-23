@@ -1,4 +1,4 @@
-package com.linearpast.minecraftmanager.service;
+package com.linearpast.minecraftmanager.service.inter;
 
 import com.linearpast.minecraftmanager.entity.PlayerAnswers;
 import com.linearpast.minecraftmanager.entity.Players;

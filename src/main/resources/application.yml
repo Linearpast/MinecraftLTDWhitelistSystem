@@ -42,5 +42,6 @@ minecraft:
     password: 5c910bf5c5a34
     wlcmd: vwhitelist
     heart-time: 600
+    test-cmd: l
 email:
   enable: false
