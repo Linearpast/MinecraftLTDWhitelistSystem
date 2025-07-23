@@ -8,10 +8,10 @@ import com.linearpast.minecraftmanager.repository.view.PlayerInfoViewRepository;
 import com.linearpast.minecraftmanager.service.PlayersService;
 import com.linearpast.minecraftmanager.utils.config.ConfigLoader;
 import com.linearpast.minecraftmanager.utils.config.SelfConfig;
+import com.linearpast.minecraftmanager.utils.rcon.MinecraftRconService;
 import com.linearpast.minecraftmanager.utils.rcon.SelfWhiteListCommand;
 import io.graversen.minecraft.rcon.MinecraftRcon;
 import io.graversen.minecraft.rcon.RconResponse;
-import io.graversen.minecraft.rcon.service.MinecraftRconService;
 import io.graversen.minecraft.rcon.util.Target;
 import io.graversen.minecraft.rcon.util.WhiteListModes;
 import jakarta.mail.MessagingException;
@@ -25,7 +25,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +40,8 @@ public class PlayersServiceImpl implements PlayersService {
 	private MinecraftRconService rconService;
 	@Autowired
 	private JavaMailSenderImpl mailSender;
+	@Autowired
+	private SelfConfig selfConfig;
 
 	@Override
 	public Page<PlayerInfoView> getPlayers(
@@ -61,7 +62,7 @@ public class PlayersServiceImpl implements PlayersService {
 	public boolean deletePlayer(Integer id) {
 		Players byId = playersRepository.findById(id).orElse(null);
 		if(byId == null) return false;
-		rconService.connectBlocking(Duration.ofSeconds(5));
+		rconService.connect();
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(minecraftRcon == null) return false;
 		RconResponse response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.REMOVE));
@@ -76,7 +77,7 @@ public class PlayersServiceImpl implements PlayersService {
 	public int updatePlayerStatus(Integer id, Byte status, Operators operators) {
 		Players byId = playersRepository.findById(id).orElse(null);
 		if (byId == null) return 0;
-		rconService.connectBlocking(Duration.ofSeconds(5));
+		rconService.connect();
 		RconResponse response;
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(minecraftRcon == null) return 0;
@@ -105,7 +106,7 @@ public class PlayersServiceImpl implements PlayersService {
 
 	@Override
 	public Players savePlayer(Players player) {
-		rconService.connectBlocking(Duration.ofSeconds(5));
+		rconService.connect();
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(player.getId() == null){
 			if(player.getStatus() == 1) {
@@ -141,7 +142,7 @@ public class PlayersServiceImpl implements PlayersService {
 	public int deletePlayers(List<Integer> ids) {
 		List<Players> allById = playersRepository.findAllById(ids);
 		if(allById.isEmpty()) return 0;
-		rconService.connectBlocking(Duration.ofSeconds(5));
+		rconService.connect();
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(minecraftRcon == null) return 0;
 		List<Integer> successIds = new ArrayList<>();
@@ -165,7 +166,7 @@ public class PlayersServiceImpl implements PlayersService {
 	public int updatePlayersStatus(List<Integer> ids, Byte status, Operators operators) {
 		List<Players> allById = playersRepository.findAllById(ids);
 		if(allById.isEmpty()) return 0;
-		rconService.connectBlocking(Duration.ofSeconds(5));
+		rconService.connect();
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(minecraftRcon == null) return 0;
 		List<Integer> successIds = new ArrayList<>();

@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.linearpast</groupId>
     <artifactId>MinecraftManager</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <name>MinecraftManager</name>
     <description>MinecraftManager</description>
     <properties>

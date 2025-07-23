@@ -41,5 +41,6 @@ minecraft:
     port: 1337
     password: 5c910bf5c5a34
     wlcmd: vwhitelist
+    heart-time: 600
 email:
-  enable: true
+  enable: false
