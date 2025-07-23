@@ -37,10 +37,9 @@ spring:
 # ========== self config ==========
 minecraft:
   rcon:
-#    host: ltd.mmccdd.top
-#    port: 12106
-#    password: LTDyydsR3944Realms
     host: 101.132.244.227
     port: 1337
     password: 5c910bf5c5a34
     wlcmd: vwhitelist
+email:
+  enable: true

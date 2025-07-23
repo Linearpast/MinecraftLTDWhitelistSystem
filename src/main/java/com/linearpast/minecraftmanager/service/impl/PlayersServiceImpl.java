@@ -7,6 +7,7 @@ import com.linearpast.minecraftmanager.repository.PlayersRepository;
 import com.linearpast.minecraftmanager.repository.view.PlayerInfoViewRepository;
 import com.linearpast.minecraftmanager.service.PlayersService;
 import com.linearpast.minecraftmanager.utils.config.ConfigLoader;
+import com.linearpast.minecraftmanager.utils.config.SelfConfig;
 import com.linearpast.minecraftmanager.utils.rcon.SelfWhiteListCommand;
 import io.graversen.minecraft.rcon.MinecraftRcon;
 import io.graversen.minecraft.rcon.RconResponse;
@@ -185,7 +186,6 @@ public class PlayersServiceImpl implements PlayersService {
 				}
 			});
 		}
-
 		return playersRepository.bulkUpdateStatus(successIds, status, operators);
 	}
 
@@ -202,6 +202,7 @@ public class PlayersServiceImpl implements PlayersService {
 	}
 
 	private void sendDealEmail(String qq, Byte status, String playerName, boolean delete) throws MessagingException {
+		if(!SelfConfig.emailEnable) return;
 		String statusText = status == 1 ? "通过" : "拒绝";
 		if(delete) statusText = "重置";
 		String mainColor = status == 1 ? "#4CAF50" : "#F44336"; // 通过为绿色，拒绝为红色
@@ -263,6 +264,6 @@ public class PlayersServiceImpl implements PlayersService {
 		helper.setText(html, true);  // true表示内容是HTML
 
 		// 发送邮件
-//		mailSender.send(message);
+		mailSender.send(message);
 	}
 }
