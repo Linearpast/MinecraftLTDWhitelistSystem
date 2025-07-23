@@ -1,4 +1,4 @@
-package com.linearpast.minecraftmanager.utils;
+package com.linearpast.minecraftmanager.utils.http;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;

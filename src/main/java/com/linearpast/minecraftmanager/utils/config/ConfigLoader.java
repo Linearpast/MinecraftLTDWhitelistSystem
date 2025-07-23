@@ -1,4 +1,4 @@
-package com.linearpast.minecraftmanager.utils;
+package com.linearpast.minecraftmanager.utils.config;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;

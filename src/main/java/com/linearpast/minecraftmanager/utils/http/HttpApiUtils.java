@@ -1,4 +1,4 @@
-package com.linearpast.minecraftmanager.utils;
+package com.linearpast.minecraftmanager.utils.http;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

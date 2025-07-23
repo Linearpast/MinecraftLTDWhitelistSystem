@@ -1,10 +1,9 @@
-package com.linearpast.minecraftmanager.utils;
+package com.linearpast.minecraftmanager.utils.rcon;
 
 import io.graversen.minecraft.rcon.service.ConnectOptions;
 import io.graversen.minecraft.rcon.service.MinecraftRconService;
 import io.graversen.minecraft.rcon.service.RconDetails;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 

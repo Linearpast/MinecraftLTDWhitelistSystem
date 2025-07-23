@@ -6,10 +6,10 @@ import com.linearpast.minecraftmanager.entity.view.PlayerInfoView;
 import com.linearpast.minecraftmanager.repository.PlayersRepository;
 import com.linearpast.minecraftmanager.repository.view.PlayerInfoViewRepository;
 import com.linearpast.minecraftmanager.service.PlayersService;
-import com.linearpast.minecraftmanager.utils.ConfigLoader;
+import com.linearpast.minecraftmanager.utils.config.ConfigLoader;
+import com.linearpast.minecraftmanager.utils.rcon.SelfWhiteListCommand;
 import io.graversen.minecraft.rcon.MinecraftRcon;
 import io.graversen.minecraft.rcon.RconResponse;
-import io.graversen.minecraft.rcon.commands.WhiteListCommand;
 import io.graversen.minecraft.rcon.service.MinecraftRconService;
 import io.graversen.minecraft.rcon.util.Target;
 import io.graversen.minecraft.rcon.util.WhiteListModes;
@@ -63,7 +63,7 @@ public class PlayersServiceImpl implements PlayersService {
 		rconService.connectBlocking(Duration.ofSeconds(5));
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(minecraftRcon == null) return false;
-		RconResponse response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.REMOVE));
+		RconResponse response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.REMOVE));
 		if(response.getResponseId() != 0) return false;
 		this.asyncSendEmail(byId, (byte)0, true);
 		playersRepository.deleteById(id);
@@ -80,9 +80,9 @@ public class PlayersServiceImpl implements PlayersService {
 		MinecraftRcon minecraftRcon = rconService.minecraftRcon().orElse(null);
 		if(minecraftRcon == null) return 0;
 		if (status == 1) {
-			response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.ADD));
+			response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.ADD));
 		} else {
-			response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.REMOVE));
+			response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(byId.getPlayerName()), WhiteListModes.REMOVE));
 		}
 		if (response.getResponseId() == 0) {
 			asyncSendEmail(byId, status, false);
@@ -109,7 +109,7 @@ public class PlayersServiceImpl implements PlayersService {
 		if(player.getId() == null){
 			if(player.getStatus() == 1) {
 				if(minecraftRcon == null) return null;
-				RconResponse response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(player.getPlayerName()), WhiteListModes.ADD));
+				RconResponse response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(player.getPlayerName()), WhiteListModes.ADD));
 				if(response.getResponseId() != 0) return null;
 				asyncSendEmail(player, player.getStatus(), false);
 			}
@@ -120,9 +120,9 @@ public class PlayersServiceImpl implements PlayersService {
 				if(minecraftRcon == null) return null;
 				RconResponse response;
 				if(player.getStatus() == 1) {
-					response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(player.getPlayerName()), WhiteListModes.ADD));
+					response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(player.getPlayerName()), WhiteListModes.ADD));
 				}else {
-					response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(player.getPlayerName()), WhiteListModes.REMOVE));
+					response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(player.getPlayerName()), WhiteListModes.REMOVE));
 				}
 				if(response.getResponseId() != 0) return null;
 				asyncSendEmail(player, player.getStatus(), false);
@@ -145,7 +145,7 @@ public class PlayersServiceImpl implements PlayersService {
 		if(minecraftRcon == null) return 0;
 		List<Integer> successIds = new ArrayList<>();
 		allById.forEach(players -> {
-			RconResponse response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(players.getPlayerName()), WhiteListModes.REMOVE));
+			RconResponse response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(players.getPlayerName()), WhiteListModes.REMOVE));
 			if (response.getResponseId() == 0) {
 				successIds.add(players.getId());
 				asyncSendEmail(players, (byte) 0, true);
@@ -170,7 +170,7 @@ public class PlayersServiceImpl implements PlayersService {
 		List<Integer> successIds = new ArrayList<>();
 		if (status == 1) {
 			allById.forEach(players -> {
-				RconResponse response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(players.getPlayerName()), WhiteListModes.ADD));
+				RconResponse response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(players.getPlayerName()), WhiteListModes.ADD));
 				if (response.getResponseId() == 0) {
 					successIds.add(players.getId());
 					asyncSendEmail(players, status, false);
@@ -178,7 +178,7 @@ public class PlayersServiceImpl implements PlayersService {
 			});
 		} else {
 			allById.forEach(players -> {
-				RconResponse response = minecraftRcon.sendSync(new WhiteListCommand(Target.player(players.getPlayerName()), WhiteListModes.REMOVE));
+				RconResponse response = minecraftRcon.sendSync(new SelfWhiteListCommand(Target.player(players.getPlayerName()), WhiteListModes.REMOVE));
 				if (response.getResponseId() == 0) {
 					successIds.add(players.getId());
 					asyncSendEmail(players, status, false);
@@ -263,6 +263,6 @@ public class PlayersServiceImpl implements PlayersService {
 		helper.setText(html, true);  // true表示内容是HTML
 
 		// 发送邮件
-		mailSender.send(message);
+//		mailSender.send(message);
 	}
 }
