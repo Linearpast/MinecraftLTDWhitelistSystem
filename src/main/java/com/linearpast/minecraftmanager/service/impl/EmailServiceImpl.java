@@ -86,7 +86,7 @@ public class EmailServiceImpl implements EmailService {
 		Players players = optionalToken.get();
 		ConfirmationEmail confirmationToken = players.getConfirmationEmail();
 		if (confirmationToken.getUsed()) {
-			return false;  // token已使用
+			return confirmationToken.getActive();  // token已使用
 		}
 		if (confirmationToken.getExpiredTime().isBefore(LocalDateTime.now())) {
 			playerAnswersServiceImpl.deleteAllPlayerAnswers(players);
@@ -101,6 +101,7 @@ public class EmailServiceImpl implements EmailService {
 	public void markTokenAsUsed(String token) {
 		Optional<ConfirmationEmail> optionalToken = this.findConfirmationEmailByToken(token);
 		optionalToken.ifPresent(tokenEntity -> {
+			if(tokenEntity.getUsed() && tokenEntity.getActive()) return;
 			tokenEntity.setUsed(true);
 			tokenEntity.setActive(true);
 			this.saveConfirmationEmail(tokenEntity);

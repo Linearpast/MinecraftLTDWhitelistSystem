@@ -37,11 +37,12 @@ spring:
 # ========== self config ==========
 minecraft:
   rcon:
-    host: 101.132.244.227
-    port: 1337
-    password: 5c910bf5c5a34
-    wlcmd: vwhitelist
+    host: 127.0.0.1
+    port: 25575
+    password: 123456
+    wlcmd: whitelist
     heart-time: 600
-    test-cmd: l
+    test-cmd: ping
+    add-cmd: login whitelist
 email:
   enable: false

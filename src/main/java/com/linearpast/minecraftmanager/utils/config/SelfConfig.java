@@ -10,6 +10,7 @@ public class SelfConfig {
 
 	public static String command;
 	public static String testCommand;
+	public static String addCommand;
 
 	//rcon
 	@Value("${minecraft.rcon.host}")
@@ -35,5 +36,10 @@ public class SelfConfig {
 	@Value("${minecraft.rcon.test-cmd}")
 	public void testCommand(String command) {
 		SelfConfig.testCommand = command;
+	}
+
+	@Value("${minecraft.rcon.add-cmd}")
+	public void addCommand(String command) {
+		SelfConfig.addCommand = command;
 	}
 }
